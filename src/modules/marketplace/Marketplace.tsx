@@ -1,6 +1,5 @@
 import { Network } from "lucide-react";
 import { ModuleHeader } from "../../components/layout/ModuleHeader";
-import { useAuth } from "../../auth/AuthContext";
 import { useInstalledModules } from "../../hooks/useInstalledModules";
 import "./Marketplace.css";
 
@@ -22,17 +21,7 @@ const AVAILABLE_MODULES: MarketplaceModuleDef[] = [
 ];
 
 export function Marketplace() {
-  const { profile } = useAuth();
   const { loading, isEnabled, toggle } = useInstalledModules();
-
-  if (profile && profile.role !== "admin") {
-    return (
-      <section>
-        <ModuleHeader title="Marketplace de módulos" subtitle="Instala o desactiva módulos opcionales" />
-        <p className="osint-empty">Solo un administrador puede instalar o desactivar módulos.</p>
-      </section>
-    );
-  }
 
   return (
     <section>

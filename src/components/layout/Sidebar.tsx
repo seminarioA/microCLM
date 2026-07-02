@@ -28,6 +28,7 @@ const NAV_ITEMS: { id: ModuleId; label: string; icon: typeof Columns3 }[] = [
   { id: "osint", label: "Prospección", icon: Radar },
   { id: "dashboard", label: "Dashboard", icon: PieChart },
   { id: "profiles", label: "Perfiles", icon: IdCard },
+  { id: "marketplace", label: "Marketplace", icon: Store },
 ];
 
 const ORGCHART_NAV_ITEM: { id: ModuleId; label: string; icon: typeof Columns3 } = {
@@ -37,7 +38,6 @@ const ORGCHART_NAV_ITEM: { id: ModuleId; label: string; icon: typeof Columns3 } 
 };
 
 const ADMIN_NAV_ITEMS: { id: ModuleId; label: string; icon: typeof Columns3 }[] = [
-  { id: "marketplace", label: "Marketplace", icon: Store },
   { id: "settings", label: "Configuración", icon: SettingsIcon },
 ];
 
