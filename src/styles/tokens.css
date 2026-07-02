@@ -1,0 +1,44 @@
+:root {
+  /* — Paleta LSM (brandbook) — */
+  --color-accent: #f27405;
+  --color-accent-deep: #d93d04;
+  --color-moss: #365902;
+  --color-moss-light: #76b948;
+  --color-amber: #ffa50e;
+  --color-terracotta: #de8033;
+  --color-legado: #d6401e;
+  --color-paper: #f5f3e8;
+
+  /* — Superficie neutra, estilo minimalista japonés — */
+  --color-bg: var(--color-paper);
+  --color-surface: #ffffff;
+  --color-ink: #1c1b17;
+  --color-ink-soft: #6f6d61;
+  --color-ink-faint: #9b9888;
+  --color-line: #e6e2d4;
+  --color-line-strong: #d8d3bf;
+  --color-accent-tint: rgba(242, 116, 5, 0.08);
+  --color-danger: #b23a1f;
+  --color-success: var(--color-moss);
+
+  /* — Tipografía — */
+  --font-display: "Anton", sans-serif;
+  --font-body: "Kanit", sans-serif;
+
+  /* — Ritmo / espaciado — */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+
+  --transition-fast: 150ms ease;
+  --transition-base: 220ms ease;
+}
