@@ -1,20 +1,26 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import {
   AtSign,
   Building2,
   Fingerprint,
   GlobeCheck,
-  MapPin,
   Newspaper,
   Radar,
   ShieldCheck,
   UserSearch,
 } from "lucide-react";
 import { ModuleHeader } from "../../components/layout/ModuleHeader";
-import { generateOsintProfile, OSINT_LOADING_TEXTS, type OsintProfile, type OsintSignal } from "./osintMock";
+import { runOsintSearch, type OsintSearchProfile, type OsintSignal } from "../../lib/crm";
 import "./Osint.css";
 
-type Step = "idle" | "loading" | "result";
+type Step = "idle" | "loading" | "result" | "error";
+
+const LOADING_TEXTS = [
+  "Consultando DuckDuckGo...",
+  "Analizando resultados públicos...",
+  "Detectando presencia digital...",
+  "Consolidando perfil de prospección...",
+];
 
 function SignalRow({ signal }: { signal: OsintSignal }) {
   return (
@@ -34,14 +40,10 @@ export function OsintProspecting() {
   const [company, setCompany] = useState("");
   const [nameError, setNameError] = useState(false);
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
-  const [profile, setProfile] = useState<OsintProfile | null>(null);
-  const timers = useRef<number[]>([]);
+  const [profile, setProfile] = useState<OsintSearchProfile | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    return () => timers.current.forEach((t) => window.clearTimeout(t));
-  }, []);
-
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) {
       setNameError(true);
@@ -50,25 +52,28 @@ export function OsintProspecting() {
     setNameError(false);
     setStep("loading");
     setLoadingTextIndex(0);
+    setError(null);
 
-    let idx = 0;
     const interval = window.setInterval(() => {
-      idx = Math.min(idx + 1, OSINT_LOADING_TEXTS.length - 1);
-      setLoadingTextIndex(idx);
-    }, 480);
-    timers.current.push(interval);
+      setLoadingTextIndex((i) => Math.min(i + 1, LOADING_TEXTS.length - 1));
+    }, 900);
 
-    const timeout = window.setTimeout(() => {
-      window.clearInterval(interval);
-      setProfile(generateOsintProfile(name, company));
+    try {
+      const result = await runOsintSearch(name, company);
+      setProfile(result);
       setStep("result");
-    }, 2400);
-    timers.current.push(timeout);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo completar la búsqueda");
+      setStep("error");
+    } finally {
+      window.clearInterval(interval);
+    }
   }
 
   function handleReset() {
     setStep("idle");
     setProfile(null);
+    setError(null);
     setName("");
     setCompany("");
   }
@@ -77,7 +82,7 @@ export function OsintProspecting() {
     <section>
       <ModuleHeader
         title="Prospección OSINT"
-        subtitle="Enriquecimiento de prospectos a partir de fuentes públicas y abiertas"
+        subtitle="Enriquecimiento de prospectos con búsqueda real en DuckDuckGo"
       />
 
       <div className="osint-search panel">
@@ -112,7 +117,7 @@ export function OsintProspecting() {
             />
           </div>
           <button type="submit" className="btn btn-primary osint-search__submit" disabled={step === "loading"}>
-            <Radar size={14} strokeWidth={2} /> Buscar en fuentes públicas
+            <Radar size={14} strokeWidth={2} /> Buscar en DuckDuckGo
           </button>
         </form>
       </div>
@@ -122,14 +127,17 @@ export function OsintProspecting() {
           <div className="osint-loading__spinner">
             <Radar size={26} strokeWidth={1.6} />
           </div>
-          <h3>Rastreando fuentes abiertas</h3>
-          <div className="progress-bar">
-            <div
-              className="progress-fill"
-              style={{ width: `${((loadingTextIndex + 1) / OSINT_LOADING_TEXTS.length) * 100}%` }}
-            />
-          </div>
-          <p className="osint-loading__text">{OSINT_LOADING_TEXTS[loadingTextIndex]}</p>
+          <h3>Buscando en fuentes públicas</h3>
+          <p className="osint-loading__text">{LOADING_TEXTS[loadingTextIndex]}</p>
+        </div>
+      )}
+
+      {step === "error" && (
+        <div className="osint-loading panel">
+          <p className="field-error">{error}</p>
+          <button type="button" className="btn btn-outline" onClick={handleReset}>
+            <Fingerprint size={13} strokeWidth={2} /> Intentar de nuevo
+          </button>
         </div>
       )}
 
@@ -142,14 +150,9 @@ export function OsintProspecting() {
             />
             <div>
               <h3>{profile.name}</h3>
-              <p>
-                {profile.role} · {profile.company}
-              </p>
+              <p>{profile.company || "Sin empresa especificada"}</p>
               <div className="osint-profile__meta">
-                <span>
-                  <MapPin size={12} strokeWidth={2} /> {profile.location}
-                </span>
-                <span className="badge badge-software">{profile.sector}</span>
+                <span>{profile.resultCount} resultados encontrados en DuckDuckGo</span>
               </div>
             </div>
           </div>
@@ -195,14 +198,16 @@ export function OsintProspecting() {
                 </h4>
               </div>
               {profile.mentions.length === 0 ? (
-                <p className="osint-empty">Sin menciones públicas recientes.</p>
+                <p className="osint-empty">Sin menciones públicas adicionales.</p>
               ) : (
                 profile.mentions.map((m) => (
-                  <div className="mention-row" key={m.title}>
-                    <p>{m.title}</p>
-                    <small>
-                      {m.source} · {m.date}
-                    </small>
+                  <div className="mention-row" key={m.url}>
+                    <p>
+                      <a href={m.url} target="_blank" rel="noreferrer">
+                        {m.title}
+                      </a>
+                    </p>
+                    <small>{m.source}</small>
                   </div>
                 ))
               )}
@@ -212,8 +217,8 @@ export function OsintProspecting() {
           <div className="osint-disclaimer">
             <ShieldCheck size={14} strokeWidth={2} />
             <p>
-              Resultados simulados con fines de demostración a partir de fuentes públicas y abiertas. No se accede a
-              bases de datos privadas ni información confidencial.
+              Resultados obtenidos en tiempo real desde DuckDuckGo (fuentes públicas y abiertas). El patrón de correo
+              y el sitio corporativo son estimaciones a partir de los resultados, no datos verificados.
             </p>
           </div>
 

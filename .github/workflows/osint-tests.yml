@@ -1,0 +1,30 @@
+name: OSINT search tests
+
+on:
+  push:
+    branches: [main, master, dev]
+    paths:
+      - "supabase/functions/osint-search/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/osint-tests.yml"
+  pull_request:
+    paths:
+      - "supabase/functions/osint-search/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run OSINT parsing/classification tests
+        run: npx vitest run supabase/functions/osint-search --reporter=verbose

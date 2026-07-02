@@ -227,6 +227,16 @@
   margin-bottom: 3px;
 }
 
+.mention-row a {
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.mention-row a:hover {
+  color: var(--color-accent-deep);
+  text-decoration: underline;
+}
+
 .mention-row small {
   font-size: 10.5px;
   color: var(--color-ink-faint);

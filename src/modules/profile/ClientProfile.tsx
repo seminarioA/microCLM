@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Briefcase,
   Building2,
@@ -13,13 +13,8 @@ import {
 } from "lucide-react";
 import { ModuleHeader } from "../../components/layout/ModuleHeader";
 import { SECTOR_LABEL } from "../../data/mockData";
-import {
-  addTimelineEvent,
-  fetchFeaturedProfile,
-  fetchTimeline,
-  type LeadProfile,
-  type TimelineEvent,
-} from "../../lib/crm";
+import { addTimelineEvent, fetchLeadProfile, fetchTimeline, type LeadProfile, type TimelineEvent } from "../../lib/crm";
+import { EditProfileModal } from "./EditProfileModal";
 import "./ClientProfile.css";
 
 const TIMELINE_ICON: Record<string, typeof Phone> = {
@@ -44,20 +39,30 @@ function formatDate(iso: string): string {
   });
 }
 
-export function ClientProfile() {
+interface ClientProfileProps {
+  leadId?: string;
+}
+
+export function ClientProfile({ leadId }: ClientProfileProps) {
   const [profile, setProfile] = useState<LeadProfile | null>(null);
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [note, setNote] = useState("");
+  const [editing, setEditing] = useState(false);
 
-  useEffect(() => {
-    fetchFeaturedProfile()
+  const load = useCallback(() => {
+    setLoading(true);
+    fetchLeadProfile(leadId)
       .then(async (p) => {
         setProfile(p);
-        if (p) setTimeline(await fetchTimeline(p.leadId));
+        setTimeline(p ? await fetchTimeline(p.leadId) : []);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [leadId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   async function registerAction(type: string, label: string) {
     const text = note.trim();
@@ -92,7 +97,7 @@ export function ClientProfile() {
         title="Perfil del Cliente"
         subtitle="Historial completo de interacciones"
         actions={
-          <button type="button" className="btn btn-outline">
+          <button type="button" className="btn btn-outline" onClick={() => setEditing(true)}>
             <Pencil size={13} strokeWidth={2} /> Editar perfil
           </button>
         }
@@ -211,6 +216,17 @@ export function ClientProfile() {
           </div>
         </div>
       </div>
+
+      {editing && (
+        <EditProfileModal
+          profile={profile}
+          onClose={() => setEditing(false)}
+          onSaved={() => {
+            setEditing(false);
+            load();
+          }}
+        />
+      )}
     </section>
   );
 }

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabaseClient";
 import type { Database } from "../lib/database.types";
@@ -11,6 +11,7 @@ interface AuthContextValue {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -33,18 +34,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  useEffect(() => {
+  const refreshProfile = useCallback(async () => {
     if (!session) {
       setProfile(null);
       return;
     }
-    supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", session.user.id)
-      .single()
-      .then(({ data }) => setProfile(data));
+    const { data } = await supabase.from("profiles").select("*").eq("id", session.user.id).single();
+    setProfile(data);
   }, [session]);
+
+  useEffect(() => {
+    refreshProfile();
+  }, [refreshProfile]);
 
   async function signIn(email: string, password: string) {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -56,7 +57,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ session, profile, loading, signIn, signOut }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ session, profile, loading, signIn, signOut, refreshProfile }}>
+      {children}
+    </AuthContext.Provider>
   );
 }
 

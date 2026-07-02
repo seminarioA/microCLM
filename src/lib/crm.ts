@@ -163,6 +163,8 @@ export function countBy(leads: AnalyticsLead[], key: "sector" | "source"): Recor
 
 export interface LeadProfile {
   leadId: string;
+  contactId: string;
+  companyId: string | null;
   stageLabel: string;
   sector: string | null;
   contact: {
@@ -177,51 +179,113 @@ export interface LeadProfile {
 
 export type TimelineEvent = Database["public"]["Tables"]["timeline_events"]["Row"];
 
-/** Elige el lead con historial de interacciones más antiguo como perfil destacado. */
-export async function fetchFeaturedProfile(): Promise<LeadProfile | null> {
-  const { data: firstEvent } = await supabase
-    .from("timeline_events")
-    .select("lead_id")
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+/**
+ * Carga el perfil de un lead. Sin `leadId`, elige el lead con historial de
+ * interacciones más antiguo (o el más reciente si aún no hay timeline).
+ */
+export async function fetchLeadProfile(leadId?: string): Promise<LeadProfile | null> {
+  let id = leadId;
 
-  let leadId = firstEvent?.lead_id;
+  if (!id) {
+    const { data: firstEvent } = await supabase
+      .from("timeline_events")
+      .select("lead_id")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    id = firstEvent?.lead_id;
+  }
 
-  if (!leadId) {
+  if (!id) {
     const { data: latestLead } = await supabase
       .from("leads")
       .select("id")
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    leadId = latestLead?.id;
+    id = latestLead?.id;
   }
 
-  if (!leadId) return null;
+  if (!id) return null;
 
   const { data, error } = await supabase
     .from("leads")
     .select(
-      "id, sector, stage:pipeline_stages(label), contact:contacts(full_name, email, phone, role_title, linkedin_url), company:companies(name)",
+      "id, contact_id, company_id, sector, stage:pipeline_stages(label), contact:contacts(full_name, email, phone, role_title, linkedin_url), company:companies(name)",
     )
-    .eq("id", leadId)
+    .eq("id", id)
     .single();
   if (error) throw error;
 
   const stage = one(data.stage as unknown as { label: string } | { label: string }[]);
-  const contact = one(
-    data.contact as unknown as LeadProfile["contact"] | LeadProfile["contact"][],
-  );
+  const contact = one(data.contact as unknown as LeadProfile["contact"] | LeadProfile["contact"][]);
   const company = one(data.company as unknown as LeadProfile["company"] | LeadProfile["company"][]);
 
   return {
     leadId: data.id,
+    contactId: data.contact_id ?? "",
+    companyId: data.company_id,
     stageLabel: stage?.label ?? "Sin etapa",
     sector: data.sector,
     contact: contact ?? { full_name: "Sin nombre", email: null, phone: null, role_title: null, linkedin_url: null },
     company: company ?? { name: "Sin empresa" },
   };
+}
+
+export interface ContactUpdateInput {
+  full_name: string;
+  email: string | null;
+  phone: string | null;
+  role_title: string | null;
+  linkedin_url: string | null;
+}
+
+export async function updateContact(contactId: string, input: ContactUpdateInput) {
+  const { error } = await supabase.from("contacts").update(input).eq("id", contactId);
+  if (error) throw error;
+}
+
+export async function updateCompanyName(companyId: string, name: string) {
+  const { error } = await supabase.from("companies").update({ name: name.trim() }).eq("id", companyId);
+  if (error) throw error;
+}
+
+export interface LeadSearchResult {
+  leadId: string;
+  contactName: string;
+  companyName: string;
+}
+
+/** Busca leads por nombre de contacto o de empresa. */
+export async function searchLeads(query: string): Promise<LeadSearchResult[]> {
+  const q = query.trim();
+  if (q.length < 2) return [];
+
+  const [{ data: contactMatches }, { data: companyMatches }] = await Promise.all([
+    supabase.from("contacts").select("id").ilike("full_name", `%${q}%`).limit(5),
+    supabase.from("companies").select("id").ilike("name", `%${q}%`).limit(5),
+  ]);
+
+  const contactIds = (contactMatches ?? []).map((c) => c.id);
+  const companyIds = (companyMatches ?? []).map((c) => c.id);
+  if (contactIds.length === 0 && companyIds.length === 0) return [];
+
+  const orParts: string[] = [];
+  if (contactIds.length) orParts.push(`contact_id.in.(${contactIds.join(",")})`);
+  if (companyIds.length) orParts.push(`company_id.in.(${companyIds.join(",")})`);
+
+  const { data: leads, error } = await supabase
+    .from("leads")
+    .select("id, contact:contacts(full_name), company:companies(name)")
+    .or(orParts.join(","))
+    .limit(8);
+  if (error) throw error;
+
+  return (leads ?? []).map((l) => ({
+    leadId: l.id,
+    contactName: one(l.contact as unknown as { full_name: string } | { full_name: string }[])?.full_name ?? "Sin nombre",
+    companyName: one(l.company as unknown as { name: string } | { name: string }[])?.name ?? "Sin empresa",
+  }));
 }
 
 export async function fetchTimeline(leadId: string): Promise<TimelineEvent[]> {
@@ -259,4 +323,53 @@ export async function fetchNotifications(): Promise<NotificationRow[]> {
 export async function markNotificationRead(id: string) {
   const { error } = await supabase.from("notifications").update({ read: true }).eq("id", id);
   if (error) throw error;
+}
+
+/** Sube la foto de perfil al bucket "avatars" y actualiza profiles.avatar_url. */
+export async function uploadAvatar(userId: string, file: File): Promise<string> {
+  const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+  const path = `${userId}/avatar.${ext}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("avatars")
+    .upload(path, file, { upsert: true, cacheControl: "3600" });
+  if (uploadError) throw uploadError;
+
+  const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+  const publicUrl = `${data.publicUrl}?t=${Date.now()}`;
+
+  const { error: updateError } = await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("id", userId);
+  if (updateError) throw updateError;
+
+  return publicUrl;
+}
+
+export interface OsintSignal {
+  label: string;
+  value: string;
+  confidence: "Alta" | "Media" | "Baja";
+}
+
+export interface OsintMention {
+  title: string;
+  source: string;
+  url: string;
+}
+
+export interface OsintSearchProfile {
+  name: string;
+  company: string;
+  digitalFootprint: OsintSignal[];
+  companyInfo: OsintSignal[];
+  mentions: OsintMention[];
+  contact: OsintSignal[];
+  resultCount: number;
+}
+
+/** Ejecuta la búsqueda OSINT real (Edge Function -> DuckDuckGo) para un nombre/empresa. */
+export async function runOsintSearch(name: string, company: string): Promise<OsintSearchProfile> {
+  const { data, error } = await supabase.functions.invoke("osint-search", { body: { name, company } });
+  if (error) throw error;
+  if (data?.error) throw new Error(data.error);
+  return data.profile as OsintSearchProfile;
 }

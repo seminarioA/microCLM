@@ -1,7 +1,8 @@
-import { Columns3, IdCard, LogOut, Moon, PieChart, Radar, ShieldCheck, Sun, UserPlus } from "lucide-react";
+import { useRef, useState } from "react";
+import { Camera, Columns3, IdCard, LogOut, PieChart, Radar, ShieldCheck, UserPlus } from "lucide-react";
 import type { ModuleId } from "../../App";
-import { useTheme } from "../../theme/ThemeContext";
 import { useAuth } from "../../auth/AuthContext";
+import { uploadAvatar } from "../../lib/crm";
 import "./Sidebar.css";
 
 const NAV_ITEMS: { id: ModuleId; label: string; icon: typeof Columns3 }[] = [
@@ -18,21 +19,54 @@ interface SidebarProps {
 }
 
 export function Sidebar({ active, onSelect }: SidebarProps) {
-  const { theme, toggleTheme } = useTheme();
-  const { profile, session, signOut } = useAuth();
+  const { profile, session, signOut, refreshProfile } = useAuth();
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const displayName = profile?.full_name ?? session?.user.email ?? "Usuario";
   const roleTitle = profile?.role_title ?? "Administrador";
+  const avatarSrc =
+    profile?.avatar_url ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=1c1b17&color=F5F3E8&size=128&bold=true`;
+
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !session) return;
+
+    setUploading(true);
+    try {
+      await uploadAvatar(session.user.id, file);
+      await refreshProfile();
+    } catch (err) {
+      console.error("No se pudo subir la foto de perfil", err);
+    } finally {
+      setUploading(false);
+    }
+  }
 
   return (
     <aside className="sidebar">
       <div className="sidebar__profile">
         <div className="sidebar__avatar">
-          <img
-            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=1c1b17&color=F5F3E8&size=128&bold=true`}
-            alt={displayName}
-          />
+          <img src={avatarSrc} alt={displayName} />
           <span className="sidebar__status-dot" />
+          <button
+            type="button"
+            className="sidebar__avatar-edit"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            title="Cambiar foto de perfil"
+          >
+            <Camera size={13} strokeWidth={2} />
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="sidebar__avatar-input"
+            onChange={handleAvatarChange}
+          />
         </div>
         <h2 className="sidebar__greeting">{displayName}</h2>
         <span className="sidebar__role">
@@ -55,16 +89,7 @@ export function Sidebar({ active, onSelect }: SidebarProps) {
       </nav>
 
       <div className="sidebar__footer">
-        <button
-          type="button"
-          className="sidebar__theme-toggle"
-          onClick={toggleTheme}
-          title={theme === "light" ? "Activar modo oscuro" : "Activar modo claro"}
-        >
-          {theme === "light" ? <Moon size={14} strokeWidth={1.75} /> : <Sun size={14} strokeWidth={1.75} />}
-          <span>{theme === "light" ? "Modo oscuro" : "Modo claro"}</span>
-        </button>
-        <button type="button" className="sidebar__theme-toggle" onClick={signOut}>
+        <button type="button" className="sidebar__footer-btn" onClick={signOut}>
           <LogOut size={14} strokeWidth={1.75} />
           <span>Cerrar sesión</span>
         </button>
