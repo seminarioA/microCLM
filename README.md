@@ -24,25 +24,21 @@ CLM (Client Lifecycle Management) de pipeline comercial.
 
 ## Stack
 
-<div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-  <img src="https://iconic-api.onrender.com/dark/react" width="48px" title="React" />
-  <img src="https://iconic-api.onrender.com/dark/typescript" width="48px" title="TypeScript" />
-  <img src="https://iconic-api.onrender.com/dark/vite" width="48px" title="Vite" />
-  <img src="https://iconic-api.onrender.com/dark/postgresql" width="48px" title="Postgres (Supabase)" />
-  <img src="https://iconic-api.onrender.com/dark/deno" width="48px" title="Deno (Edge Functions)" />
-  <img src="https://iconic-api.onrender.com/dark/duckduckgo" width="48px" title="DuckDuckGo (OSINT)" />
-  <img src="https://iconic-api.onrender.com/dark/vercel" width="48px" title="Vercel" />
-  <img src="https://iconic-api.onrender.com/dark/git" width="48px" title="Git" />
-  <img src="https://iconic-api.onrender.com/dark/github" width="48px" title="GitHub" />
-  <img src="https://iconic-api.onrender.com/dark/github-actions" width="48px" title="GitHub Actions" />
-</div>
-
-- React 19 + TypeScript + Vite (rolldown-vite)
-- Supabase: Postgres + Auth + Row Level Security + Storage (`avatars`) + Edge Functions (Deno), vía `@supabase/supabase-js`
-- Chart.js / react-chartjs-2
-- lucide-react
-- Vitest (tests unitarios/integración) + GitHub Actions (CI en cada push)
-- Vercel: producción auto-despliega en cada push a `main`; `dev` se despliega manualmente a un alias fijo (`microclm-dev.vercel.app`)
+| | Tecnología | Uso |
+|---|---|---|
+| <img src="https://iconic-api.onrender.com/dark/react" width="28"/> | React 19 + TypeScript | Frontend |
+| <img src="https://iconic-api.onrender.com/dark/vite" width="28"/> | Vite (rolldown-vite) | Build tool / dev server |
+| <img src="https://iconic-api.onrender.com/dark/postgresql" width="28"/> | Postgres (Supabase) | Base de datos, Row Level Security |
+| <img src="https://iconic-api.onrender.com/dark/deno" width="28"/> | Deno | Runtime de Edge Functions |
+| <img src="https://iconic-api.onrender.com/dark/duckduckgo" width="28"/> | DuckDuckGo | Fuente de datos para OSINT |
+| <img src="https://iconic-api.onrender.com/dark/vercel" width="28"/> | Vercel | Hosting, deploy automático en `main` |
+| <img src="https://iconic-api.onrender.com/dark/git" width="28"/> | Git | Control de versiones |
+| <img src="https://iconic-api.onrender.com/dark/github" width="28"/> | GitHub | Repositorio |
+| <img src="https://iconic-api.onrender.com/dark/github-actions" width="28"/> | GitHub Actions | CI, corre tests en cada push |
+| | Chart.js / react-chartjs-2 | Gráficos del Dashboard |
+| | lucide-react | Iconografía de la UI |
+| | Vitest | Tests unitarios e integración |
+| | `@supabase/supabase-js` | Cliente: Auth, Storage, Realtime, Edge Functions |
 
 ## Backend (Supabase)
 
