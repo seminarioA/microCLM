@@ -16,15 +16,15 @@ const COLOR_FIELDS: { key: keyof TenantSettingsInput; label: string }[] = [
   { key: "color_legado", label: "Quinto acento" },
 ];
 
-/** Paleta de fábrica de microCLM: tinta sumi y madera/piedra natural, minimalismo japonés sin marca de ningún tenant. */
+/** Colores de fábrica del tenant (los mismos que trae `tokens.css`): hoy, la paleta de La Segunda Mordida. */
 const DEFAULT_TENANT_COLORS: TenantSettingsInput = {
-  color_accent: "#1c1b17",
-  color_accent_deep: "#3a3830",
-  color_moss: "#6f6d61",
-  color_moss_light: "#9b9888",
-  color_amber: "#8a7f6a",
-  color_terracotta: "#5c6b5d",
-  color_legado: "#7a6a58",
+  color_accent: "#f27405",
+  color_accent_deep: "#d93d04",
+  color_moss: "#365902",
+  color_moss_light: "#76b948",
+  color_amber: "#ffa50e",
+  color_terracotta: "#de8033",
+  color_legado: "#d6401e",
 };
 
 export function Settings() {
@@ -91,8 +91,7 @@ export function Settings() {
           <p className="settings-desc">
             <Palette size={13} strokeWidth={2} /> Estos colores ya están cargados con la configuración actual del
             equipo. Cambiarlos aquí actualiza la marca en toda la app para todo el equipo, o usa "Restaurar valores
-            por defecto" para volver a la paleta de fábrica de microCLM (minimalismo japonés, sin marca de ningún
-            tenant en particular).
+            por defecto" para volver a los colores de fábrica del tenant.
           </p>
 
           <div className="settings-grid">
