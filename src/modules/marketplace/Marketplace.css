@@ -1,0 +1,70 @@
+.marketplace-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-5);
+}
+
+.marketplace-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-5);
+}
+
+.marketplace-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-accent-tint);
+  color: var(--color-accent-deep);
+}
+
+.marketplace-card__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.marketplace-card__info strong {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+.marketplace-card__info p {
+  font-size: 12px;
+  color: var(--color-ink-soft);
+}
+
+.marketplace-card__toggle {
+  flex-shrink: 0;
+  width: 38px;
+  height: 22px;
+  padding: 2px;
+  border: none;
+  border-radius: 999px;
+  background: var(--color-line-strong);
+  transition: background var(--transition-fast);
+}
+
+.marketplace-card__toggle.is-on {
+  background: var(--color-accent);
+}
+
+.marketplace-card__toggle-knob {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform var(--transition-fast);
+}
+
+.marketplace-card__toggle.is-on .marketplace-card__toggle-knob {
+  transform: translateX(16px);
+}

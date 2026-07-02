@@ -9,13 +9,23 @@ import { Dashboard } from "./modules/dashboard/Dashboard";
 import { ClientProfile } from "./modules/profile/ClientProfile";
 import { MyProfile } from "./modules/account/MyProfile";
 import { Settings } from "./modules/settings/Settings";
+import { Marketplace } from "./modules/marketplace/Marketplace";
 import { useAuth } from "./auth/AuthContext";
 import { Login } from "./auth/Login";
 import { fetchLeadIdForContact, fetchTenantSettings } from "./lib/crm";
 import { applyTenantColors } from "./theme/brand";
 import "./App.css";
 
-export type ModuleId = "kanban" | "form" | "osint" | "orgchart" | "dashboard" | "profiles" | "myProfile" | "settings";
+export type ModuleId =
+  | "kanban"
+  | "form"
+  | "osint"
+  | "orgchart"
+  | "dashboard"
+  | "profiles"
+  | "myProfile"
+  | "settings"
+  | "marketplace";
 
 function App() {
   const [active, setActive] = useState<ModuleId>("kanban");
@@ -61,6 +71,7 @@ function App() {
           {active === "profiles" && <ClientProfile leadId={selectedLeadId ?? undefined} />}
           {active === "myProfile" && <MyProfile />}
           {active === "settings" && <Settings />}
+          {active === "marketplace" && <Marketplace />}
         </div>
       </main>
     </div>

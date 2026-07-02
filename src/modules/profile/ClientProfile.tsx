@@ -5,6 +5,8 @@ import {
   Building2,
   CalendarClock,
   Camera,
+  LayoutGrid,
+  LayoutList,
   Link2,
   Mail,
   MapPin,
@@ -58,13 +60,24 @@ interface ClientProfileProps {
   leadId?: string;
 }
 
+const VIEW_MODE_KEY = "microclm-profiles-view";
+type ViewMode = "list" | "grid";
+
 function ProfilesList({ onSelect }: { onSelect: (id: string) => void }) {
   const [leads, setLeads] = useState<LeadRecord[]>([]);
   const [stages, setStages] = useState<PipelineStage[]>([]);
   const [loading, setLoading] = useState(true);
   const [sectorFilter, setSectorFilter] = useState("all");
   const [stageFilter, setStageFilter] = useState("all");
+  const [viewMode, setViewMode] = useState<ViewMode>(
+    () => (localStorage.getItem(VIEW_MODE_KEY) as ViewMode | null) ?? "list",
+  );
   const { sectors, labelOf } = useSectors();
+
+  function changeViewMode(mode: ViewMode) {
+    setViewMode(mode);
+    localStorage.setItem(VIEW_MODE_KEY, mode);
+  }
 
   useEffect(() => {
     Promise.all([fetchLeads(), fetchStages()])
@@ -113,11 +126,30 @@ function ProfilesList({ onSelect }: { onSelect: (id: string) => void }) {
             ))}
           </select>
         </div>
+
+        <div className="profiles-view-toggle">
+          <button
+            type="button"
+            className={"profiles-view-toggle__btn" + (viewMode === "list" ? " is-active" : "")}
+            onClick={() => changeViewMode("list")}
+            title="Ver en lista"
+          >
+            <LayoutList size={15} strokeWidth={1.75} />
+          </button>
+          <button
+            type="button"
+            className={"profiles-view-toggle__btn" + (viewMode === "grid" ? " is-active" : "")}
+            onClick={() => changeViewMode("grid")}
+            title="Ver en grilla"
+          >
+            <LayoutGrid size={15} strokeWidth={1.75} />
+          </button>
+        </div>
       </div>
 
       {filteredLeads.length === 0 ? (
         <p className="osint-empty">Ningún perfil coincide con los filtros seleccionados.</p>
-      ) : (
+      ) : viewMode === "list" ? (
         <div className="profiles-list panel">
           {filteredLeads.map((lead) => (
             <button type="button" key={lead.id} className="profiles-list__row" onClick={() => onSelect(lead.id)}>
@@ -134,6 +166,26 @@ function ProfilesList({ onSelect }: { onSelect: (id: string) => void }) {
               </div>
               <span className={`badge badge-${lead.sector ?? ""}`}>{labelOf(lead.sector)}</span>
               <span className="stage-badge">{stageLabel(lead.stage_id)}</span>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="profiles-grid">
+          {filteredLeads.map((lead) => (
+            <button type="button" key={lead.id} className="profiles-grid__card panel" onClick={() => onSelect(lead.id)}>
+              <img
+                src={
+                  lead.contact?.avatar_url ||
+                  `https://ui-avatars.com/api/?name=${encodeURIComponent(lead.contact?.full_name ?? "?")}&background=1c1b17&color=F5F3E8&size=96`
+                }
+                alt={lead.contact?.full_name ?? "Sin nombre"}
+              />
+              <strong>{lead.contact?.full_name ?? "Sin contacto"}</strong>
+              <span>{lead.company?.name ?? "Sin empresa"}</span>
+              <div className="profiles-grid__badges">
+                <span className={`badge badge-${lead.sector ?? ""}`}>{labelOf(lead.sector)}</span>
+                <span className="stage-badge">{stageLabel(lead.stage_id)}</span>
+              </div>
             </button>
           ))}
         </div>

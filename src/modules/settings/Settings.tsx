@@ -7,13 +7,13 @@ import { applyTenantColors } from "../../theme/brand";
 import "./Settings.css";
 
 const COLOR_FIELDS: { key: keyof TenantSettingsInput; label: string }[] = [
-  { key: "color_accent", label: "Acento principal" },
-  { key: "color_accent_deep", label: "Acento (hover / énfasis)" },
-  { key: "color_moss", label: "Musgo" },
-  { key: "color_moss_light", label: "Musgo claro" },
-  { key: "color_amber", label: "Ámbar" },
-  { key: "color_terracotta", label: "Terracota" },
-  { key: "color_legado", label: "Legado" },
+  { key: "color_accent", label: "Primario" },
+  { key: "color_accent_deep", label: "Primario (énfasis)" },
+  { key: "color_moss", label: "Secundario" },
+  { key: "color_moss_light", label: "Secundario (claro)" },
+  { key: "color_amber", label: "Terciario" },
+  { key: "color_terracotta", label: "Cuarto acento" },
+  { key: "color_legado", label: "Quinto acento" },
 ];
 
 export function Settings() {

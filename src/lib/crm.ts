@@ -591,3 +591,19 @@ export async function fetchLeadIdForContact(contactId: string): Promise<string |
   if (error) throw error;
   return data?.id ?? null;
 }
+
+export type InstalledModule = Database["public"]["Tables"]["installed_modules"]["Row"];
+
+/** Módulos opcionales instalados/habilitados para todo el equipo (p.ej. Organigrama), desde el Marketplace. */
+export async function fetchInstalledModules(): Promise<InstalledModule[]> {
+  const { data, error } = await supabase.from("installed_modules").select("*");
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function setModuleEnabled(moduleKey: string, enabled: boolean): Promise<void> {
+  const { error } = await supabase
+    .from("installed_modules")
+    .upsert({ module_key: moduleKey, enabled, updated_at: new Date().toISOString() }, { onConflict: "module_key" });
+  if (error) throw error;
+}

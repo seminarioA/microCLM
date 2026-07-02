@@ -6,6 +6,24 @@ export type Database = {
   };
   public: {
     Tables: {
+      installed_modules: {
+        Row: {
+          enabled: boolean;
+          module_key: string;
+          updated_at: string;
+        };
+        Insert: {
+          enabled?: boolean;
+          module_key: string;
+          updated_at?: string;
+        };
+        Update: {
+          enabled?: boolean;
+          module_key?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       companies: {
         Row: {
           created_at: string;

@@ -12,11 +12,13 @@ import {
   Radar,
   Settings as SettingsIcon,
   ShieldCheck,
+  Store,
   UserPlus,
 } from "lucide-react";
 import type { ModuleId } from "../../App";
 import { useAuth } from "../../auth/AuthContext";
 import { uploadAvatar } from "../../lib/crm";
+import { useInstalledModules } from "../../hooks/useInstalledModules";
 import { brand } from "../../theme/brand";
 import "./Sidebar.css";
 
@@ -24,16 +26,20 @@ const NAV_ITEMS: { id: ModuleId; label: string; icon: typeof Columns3 }[] = [
   { id: "kanban", label: "Tablero", icon: Columns3 },
   { id: "form", label: "Captación", icon: UserPlus },
   { id: "osint", label: "Prospección", icon: Radar },
-  { id: "orgchart", label: "Organigrama", icon: Network },
   { id: "dashboard", label: "Dashboard", icon: PieChart },
   { id: "profiles", label: "Perfiles", icon: IdCard },
 ];
 
-const ADMIN_NAV_ITEM: { id: ModuleId; label: string; icon: typeof Columns3 } = {
-  id: "settings",
-  label: "Configuración",
-  icon: SettingsIcon,
+const ORGCHART_NAV_ITEM: { id: ModuleId; label: string; icon: typeof Columns3 } = {
+  id: "orgchart",
+  label: "Organigrama",
+  icon: Network,
 };
+
+const ADMIN_NAV_ITEMS: { id: ModuleId; label: string; icon: typeof Columns3 }[] = [
+  { id: "marketplace", label: "Marketplace", icon: Store },
+  { id: "settings", label: "Configuración", icon: SettingsIcon },
+];
 
 const COLLAPSE_KEY = "microclm-sidebar-collapsed";
 
@@ -44,13 +50,18 @@ interface SidebarProps {
 
 export function Sidebar({ active, onSelect }: SidebarProps) {
   const { profile, session, signOut, refreshProfile } = useAuth();
+  const { isEnabled } = useInstalledModules();
   const [uploading, setUploading] = useState(false);
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem(COLLAPSE_KEY) === "1");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const displayName = profile?.full_name ?? session?.user.email ?? "Usuario";
   const cargo = profile?.role_title ?? "Sin cargo";
-  const navItems = profile?.role === "admin" ? [...NAV_ITEMS, ADMIN_NAV_ITEM] : NAV_ITEMS;
+  const navItems = [
+    ...NAV_ITEMS,
+    ...(isEnabled("orgchart") ? [ORGCHART_NAV_ITEM] : []),
+    ...(profile?.role === "admin" ? ADMIN_NAV_ITEMS : []),
+  ];
   const avatarSrc =
     profile?.avatar_url ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=1c1b17&color=F5F3E8&size=128&bold=true`;
