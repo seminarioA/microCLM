@@ -13,6 +13,20 @@
   gap: var(--space-3);
 }
 
+@media (max-width: 640px) {
+  .topbar {
+    margin-bottom: var(--space-5);
+  }
+
+  .topbar__search {
+    max-width: none;
+  }
+
+  .topbar__search input {
+    min-width: 0;
+  }
+}
+
 .topbar__search {
   position: relative;
   flex: 1;

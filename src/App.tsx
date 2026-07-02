@@ -4,6 +4,7 @@ import { TopBar } from "./components/layout/TopBar";
 import { KanbanBoard } from "./modules/kanban/KanbanBoard";
 import { LeadForm } from "./modules/leads/LeadForm";
 import { OsintProspecting } from "./modules/osint/OsintProspecting";
+import { OrgChart } from "./modules/orgchart/OrgChart";
 import { Dashboard } from "./modules/dashboard/Dashboard";
 import { ClientProfile } from "./modules/profile/ClientProfile";
 import { MyProfile } from "./modules/account/MyProfile";
@@ -11,7 +12,7 @@ import { useAuth } from "./auth/AuthContext";
 import { Login } from "./auth/Login";
 import "./App.css";
 
-export type ModuleId = "kanban" | "form" | "osint" | "dashboard" | "profiles" | "myProfile";
+export type ModuleId = "kanban" | "form" | "osint" | "orgchart" | "dashboard" | "profiles" | "myProfile";
 
 function App() {
   const [active, setActive] = useState<ModuleId>("kanban");
@@ -31,12 +32,15 @@ function App() {
       <Sidebar active={active} onSelect={setActive} />
       <main className="app-main">
         <TopBar onSelectLead={handleSelectLead} />
-        {active === "kanban" && <KanbanBoard />}
-        {active === "form" && <LeadForm />}
-        {active === "osint" && <OsintProspecting />}
-        {active === "dashboard" && <Dashboard />}
-        {active === "profiles" && <ClientProfile leadId={selectedLeadId ?? undefined} />}
-        {active === "myProfile" && <MyProfile />}
+        <div className="app-module" key={active}>
+          {active === "kanban" && <KanbanBoard />}
+          {active === "form" && <LeadForm />}
+          {active === "osint" && <OsintProspecting />}
+          {active === "orgchart" && <OrgChart />}
+          {active === "dashboard" && <Dashboard />}
+          {active === "profiles" && <ClientProfile leadId={selectedLeadId ?? undefined} />}
+          {active === "myProfile" && <MyProfile />}
+        </div>
       </main>
     </div>
   );

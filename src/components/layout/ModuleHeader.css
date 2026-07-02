@@ -29,3 +29,19 @@
   gap: var(--space-3);
   flex-shrink: 0;
 }
+
+@media (max-width: 640px) {
+  .module-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .module-header__title {
+    font-size: 22px;
+  }
+
+  .module-header__actions {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+}

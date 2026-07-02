@@ -1,5 +1,4 @@
 import { CheckCircle2, Clock, XCircle } from "lucide-react";
-import { SECTOR_LABEL } from "../../data/mockData";
 import { daysSince, type LeadRecord } from "../../lib/crm";
 
 interface KanbanCardProps {
@@ -7,11 +6,12 @@ interface KanbanCardProps {
   onDragStart: (e: React.DragEvent, cardId: string) => void;
   onDragEnd: () => void;
   dragging: boolean;
+  sectorLabel: string;
 }
 
-export function KanbanCard({ card, onDragStart, onDragEnd, dragging }: KanbanCardProps) {
+export function KanbanCard({ card, onDragStart, onDragEnd, dragging, sectorLabel }: KanbanCardProps) {
   const days = daysSince(card.created_at);
-  const sector = card.sector ?? "software";
+  const sector = card.sector ?? "";
 
   return (
     <div
@@ -22,7 +22,7 @@ export function KanbanCard({ card, onDragStart, onDragEnd, dragging }: KanbanCar
     >
       <div className="kcard__top">
         <span className="kcard__company">{card.company?.name ?? "Sin empresa"}</span>
-        <span className={`badge badge-${sector}`}>{SECTOR_LABEL[sector] ?? sector}</span>
+        <span className={`badge badge-${sector}`}>{sectorLabel}</span>
       </div>
       <div className="kcard__contact">{card.contact?.full_name ?? "Sin contacto"}</div>
       <div className="kcard__footer">

@@ -39,32 +39,38 @@ export type Database = {
       contacts: {
         Row: {
           company_id: string | null;
+          contact_reason: string | null;
           created_at: string;
           email: string | null;
           full_name: string;
           id: string;
           linkedin_url: string | null;
           phone: string | null;
+          reports_to: string | null;
           role_title: string | null;
         };
         Insert: {
           company_id?: string | null;
+          contact_reason?: string | null;
           created_at?: string;
           email?: string | null;
           full_name: string;
           id?: string;
           linkedin_url?: string | null;
           phone?: string | null;
+          reports_to?: string | null;
           role_title?: string | null;
         };
         Update: {
           company_id?: string | null;
+          contact_reason?: string | null;
           created_at?: string;
           email?: string | null;
           full_name?: string;
           id?: string;
           linkedin_url?: string | null;
           phone?: string | null;
+          reports_to?: string | null;
           role_title?: string | null;
         };
         Relationships: [
@@ -73,6 +79,13 @@ export type Database = {
             columns: ["company_id"];
             isOneToOne: false;
             referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "contacts_reports_to_fkey";
+            columns: ["reports_to"];
+            isOneToOne: false;
+            referencedRelation: "contacts";
             referencedColumns: ["id"];
           },
         ];
@@ -229,6 +242,7 @@ export type Database = {
           created_at: string;
           full_name: string;
           id: string;
+          role: string;
           role_title: string;
         };
         Insert: {
@@ -236,6 +250,7 @@ export type Database = {
           created_at?: string;
           full_name?: string;
           id: string;
+          role?: string;
           role_title?: string;
         };
         Update: {
@@ -243,7 +258,29 @@ export type Database = {
           created_at?: string;
           full_name?: string;
           id?: string;
+          role?: string;
           role_title?: string;
+        };
+        Relationships: [];
+      };
+      sectors: {
+        Row: {
+          created_at: string;
+          id: string;
+          key: string;
+          label: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          key: string;
+          label: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          key?: string;
+          label?: string;
         };
         Relationships: [];
       };

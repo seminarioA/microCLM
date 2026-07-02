@@ -61,6 +61,7 @@
   letter-spacing: 0.02em;
   border: 1px solid currentColor;
   line-height: 1.6;
+  color: var(--color-ink-soft);
 }
 
 .badge-software { color: var(--color-moss); }

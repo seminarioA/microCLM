@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Bar, Doughnut } from "react-chartjs-2";
 import { Building2, Clock, FileSpreadsheet, FileText, Filter, Users } from "lucide-react";
 import { ModuleHeader } from "../../components/layout/ModuleHeader";
-import { SECTOR_LABEL } from "../../data/mockData";
+import { useSectors } from "../../hooks/useSectors";
 import { useTheme } from "../../theme/ThemeContext";
+import { accentPalette, colorForKey, cssVar } from "../../theme/brand";
 import {
   averageCloseDays,
   countBy,
@@ -22,16 +23,6 @@ const PERIODS = [
 ];
 
 const CHANNEL_LABELS = ["Web", "Referidos", "LinkedIn", "Ferias", "Email"];
-const CHANNEL_COLORS = ["#f27405", "#d93d04", "#de8033", "#ffa50e", "#365902"];
-const SECTOR_COLORS: Record<string, string> = {
-  mineria: "#de8033",
-  software: "#365902",
-  retail: "#f27405",
-  finanzas: "#d6401e",
-  construccion: "#9b9888",
-  salud: "#76b948",
-  educacion: "#ffa50e",
-};
 
 export function Dashboard() {
   const [period, setPeriod] = useState("week");
@@ -39,9 +30,13 @@ export function Dashboard() {
   const [leads, setLeads] = useState<AnalyticsLead[]>([]);
   const [loading, setLoading] = useState(true);
   const { theme } = useTheme();
-  const gridColor = theme === "dark" ? "rgba(242, 239, 226, 0.08)" : "#e6e2d4";
-  const tickColor = theme === "dark" ? "#8a8570" : "#9b9888";
-  const tickColorStrong = theme === "dark" ? "#c9c4b0" : "#6f6d61";
+  const { sectors, labelOf } = useSectors();
+  // `theme` is only read to force a re-render (and re-read the CSS vars) when it toggles;
+  // the actual color values always come from the currently active tokens.css theme block.
+  const gridColor = cssVar("--color-line");
+  const tickColor = cssVar("--color-ink-faint");
+  const tickColorStrong = cssVar("--color-ink-soft");
+  const palette = useMemo(() => accentPalette(), [theme]);
 
   useEffect(() => {
     Promise.all([fetchStages(), fetchLeadsForAnalytics()])
@@ -73,29 +68,29 @@ export function Dashboard() {
         {
           label: "Leads",
           data: CHANNEL_LABELS.map((label) => counts[label] ?? 0),
-          backgroundColor: CHANNEL_COLORS,
+          backgroundColor: CHANNEL_LABELS.map((label) => colorForKey(label, palette)),
           borderRadius: 3,
           barThickness: 34,
         },
       ],
     };
-  }, [leads]);
+  }, [leads, palette]);
 
   const sectorData = useMemo(() => {
     const counts = countBy(leads, "sector");
     const entries = Object.entries(counts).filter(([, count]) => count > 0);
     return {
-      labels: entries.map(([sector]) => SECTOR_LABEL[sector] ?? sector),
+      labels: entries.map(([sector]) => labelOf(sector)),
       datasets: [
         {
           data: entries.map(([, count]) => count),
-          backgroundColor: entries.map(([sector]) => SECTOR_COLORS[sector] ?? "#9b9888"),
+          backgroundColor: entries.map(([sector]) => colorForKey(sector, palette)),
           borderWidth: 0,
           hoverOffset: 6,
         },
       ],
     };
-  }, [leads]);
+  }, [leads, palette, labelOf]);
 
   return (
     <section>
@@ -121,9 +116,11 @@ export function Dashboard() {
           <span className="eyebrow">Rubro</span>
           <select className="dash-select" defaultValue="all">
             <option value="all">Todos</option>
-            <option value="mineria">Minería</option>
-            <option value="software">Software</option>
-            <option value="retail">Retail</option>
+            {sectors.map((s) => (
+              <option key={s.key} value={s.key}>
+                {s.label}
+              </option>
+            ))}
           </select>
         </div>
         <div className="dash-filter-actions">

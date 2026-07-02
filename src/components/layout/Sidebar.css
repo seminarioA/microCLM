@@ -9,6 +9,26 @@
   display: flex;
   flex-direction: column;
   padding: var(--space-6) var(--space-5) var(--space-5);
+  transition: width var(--transition-base);
+}
+
+.sidebar__collapse-toggle {
+  align-self: flex-end;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-bottom: var(--space-3);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-ink-faint);
+}
+
+.sidebar__collapse-toggle:hover {
+  color: var(--color-accent-deep);
+  background: var(--color-accent-tint);
 }
 
 .sidebar__profile {
@@ -78,6 +98,7 @@
   font-size: 15px;
   font-weight: 500;
   margin-bottom: var(--space-1);
+  white-space: nowrap;
 }
 
 .sidebar__role {
@@ -96,6 +117,12 @@
   flex-direction: column;
   gap: 2px;
   flex: 1;
+}
+
+.sidebar__account {
+  padding-top: var(--space-3);
+  margin-top: var(--space-3);
+  border-top: 1px solid var(--color-line);
 }
 
 .sidebar__nav-item {
@@ -153,4 +180,75 @@
 .sidebar__footer-btn:hover {
   border-color: var(--color-accent);
   color: var(--color-accent-deep);
+}
+
+/* — Modo compacto — */
+.sidebar.is-collapsed {
+  width: 76px;
+}
+
+.sidebar.is-collapsed .sidebar__greeting,
+.sidebar.is-collapsed .sidebar__role,
+.sidebar.is-collapsed .sidebar__nav-item span,
+.sidebar.is-collapsed .sidebar__footer-btn span,
+.sidebar.is-collapsed .sidebar__footer > span {
+  display: none;
+}
+
+.sidebar.is-collapsed .sidebar__nav-item,
+.sidebar.is-collapsed .sidebar__footer-btn {
+  justify-content: center;
+}
+
+.sidebar.is-collapsed .sidebar__footer-btn {
+  margin-bottom: var(--space-2);
+}
+
+/* — Dock móvil (oculto en escritorio) — */
+.mobile-dock {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+
+  .mobile-dock {
+    position: fixed;
+    left: 50%;
+    bottom: 14px;
+    transform: translateX(-50%);
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: 999px;
+    box-shadow: 0 12px 32px rgba(28, 27, 23, 0.16);
+  }
+
+  .mobile-dock__item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--color-ink-soft);
+    transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+  }
+
+  .mobile-dock__item:active {
+    transform: scale(0.92);
+  }
+
+  .mobile-dock__item.is-active {
+    background: var(--color-accent-tint);
+    color: var(--color-accent-deep);
+  }
 }

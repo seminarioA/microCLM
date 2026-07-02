@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { ModuleHeader } from "../../components/layout/ModuleHeader";
 import { KanbanCard } from "./KanbanCard";
+import { useSectors } from "../../hooks/useSectors";
 import {
   createNotification,
   fetchLeads,
@@ -43,6 +44,7 @@ export function KanbanBoard() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const { labelOf } = useSectors();
 
   useEffect(() => {
     Promise.all([fetchStages(), fetchLeads()])
@@ -178,6 +180,7 @@ export function KanbanBoard() {
                     dragging={draggingId === card.id}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
+                    sectorLabel={labelOf(card.sector)}
                   />
                 ))}
               </div>

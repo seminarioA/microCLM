@@ -13,8 +13,8 @@ import {
   Wand2,
 } from "lucide-react";
 import { ModuleHeader } from "../../components/layout/ModuleHeader";
-import { SECTOR_LABEL } from "../../data/mockData";
-import { createLeadFromForm, createNotification } from "../../lib/crm";
+import { useSectors } from "../../hooks/useSectors";
+import { createLeadFromForm, createNotification, createSector } from "../../lib/crm";
 import { NameAutocomplete } from "../../components/shared/NameAutocomplete";
 import "./LeadForm.css";
 
@@ -59,6 +59,9 @@ export function LeadForm() {
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
   const [leadCode, setLeadCode] = useState("");
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [addingSector, setAddingSector] = useState(false);
+  const [newSectorLabel, setNewSectorLabel] = useState("");
+  const { sectors, labelOf, addSector } = useSectors();
   const timers = useRef<number[]>([]);
 
   useEffect(() => {
@@ -125,6 +128,16 @@ export function LeadForm() {
     setTouched({});
     setSubmitError(null);
     setStep("form");
+  }
+
+  async function handleAddSector() {
+    const label = newSectorLabel.trim();
+    if (!label) return;
+    const sector = await createSector(label);
+    addSector(sector);
+    handleChange("rubro", sector.key);
+    setNewSectorLabel("");
+    setAddingSector(false);
   }
 
   return (
@@ -201,17 +214,47 @@ export function LeadForm() {
                       id="rubro"
                       value={values.rubro}
                       className={touched.rubro && errors.rubro ? "is-error" : ""}
-                      onChange={(e) => handleChange("rubro", e.target.value)}
+                      onChange={(e) => {
+                        if (e.target.value === "__new__") {
+                          setAddingSector(true);
+                          return;
+                        }
+                        handleChange("rubro", e.target.value);
+                      }}
                       onBlur={() => handleBlur("rubro")}
                     >
                       <option value="">Selecciona un rubro</option>
-                      {Object.entries(SECTOR_LABEL).map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
+                      {sectors.map((s) => (
+                        <option key={s.key} value={s.key}>
+                          {s.label}
                         </option>
                       ))}
+                      <option value="__new__">+ Agregar nuevo rubro...</option>
                     </select>
                     {touched.rubro && errors.rubro && <span className="field-error">{errors.rubro}</span>}
+                    {addingSector && (
+                      <div className="leadform-new-sector">
+                        <input
+                          type="text"
+                          placeholder="Nombre del nuevo rubro"
+                          value={newSectorLabel}
+                          onChange={(e) => setNewSectorLabel(e.target.value)}
+                        />
+                        <button type="button" className="btn btn-sm btn-primary" onClick={handleAddSector}>
+                          Crear
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline"
+                          onClick={() => {
+                            setAddingSector(false);
+                            setNewSectorLabel("");
+                          }}
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <button type="submit" className="btn btn-primary btn-block">
@@ -261,7 +304,7 @@ export function LeadForm() {
                 </div>
                 <div className="info-row">
                   <Tag size={13} strokeWidth={2} />{" "}
-                  <span className={`badge badge-${values.rubro}`}>{SECTOR_LABEL[values.rubro]}</span>
+                  <span className={`badge badge-${values.rubro}`}>{labelOf(values.rubro)}</span>
                 </div>
                 <div className="info-row">
                   <Link2 size={13} strokeWidth={2} /> linkedin.com/in/

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { LogIn, Lock, Mail } from "lucide-react";
 import { useAuth } from "./AuthContext";
+import { brandLine } from "../theme/brand";
 import "./Login.css";
 
 export function Login() {
@@ -22,7 +23,7 @@ export function Login() {
   return (
     <div className="login-screen">
       <form className="login-card panel" onSubmit={handleSubmit}>
-        <span className="eyebrow">microCLM · La Segunda Mordida</span>
+        <span className="eyebrow">{brandLine()}</span>
         <h1>Iniciar sesión</h1>
         <p className="login-desc">Ingresa con tu cuenta del equipo comercial.</p>
 

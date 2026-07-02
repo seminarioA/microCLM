@@ -409,3 +409,86 @@ export async function runOsintSearch(name: string, company: string): Promise<Osi
   if (data?.error) throw new Error(data.error);
   return data.profile as OsintSearchProfile;
 }
+
+export type Sector = Database["public"]["Tables"]["sectors"]["Row"];
+
+export async function fetchSectors(): Promise<Sector[]> {
+  const { data, error } = await supabase.from("sectors").select("*").order("label");
+  if (error) throw error;
+  return data ?? [];
+}
+
+function slugifySectorKey(label: string): string {
+  return label
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+/** Crea un nuevo rubro si no existe uno con el mismo nombre. */
+export async function createSector(label: string): Promise<Sector> {
+  const key = slugifySectorKey(label);
+  const { data: existing } = await supabase.from("sectors").select("*").eq("key", key).maybeSingle();
+  if (existing) return existing;
+
+  const { data, error } = await supabase.from("sectors").insert({ key, label: label.trim() }).select("*").single();
+  if (error) throw error;
+  return data;
+}
+
+export interface OrgChartCompany {
+  id: string;
+  name: string;
+}
+
+export async function fetchCompaniesForOrgChart(): Promise<OrgChartCompany[]> {
+  const { data, error } = await supabase.from("companies").select("id, name").order("name");
+  if (error) throw error;
+  return data ?? [];
+}
+
+export interface OrgChartContact {
+  id: string;
+  full_name: string;
+  role_title: string | null;
+  email: string | null;
+  phone: string | null;
+  contact_reason: string | null;
+  reports_to: string | null;
+}
+
+export async function fetchOrgChart(companyId: string): Promise<OrgChartContact[]> {
+  const { data, error } = await supabase
+    .from("contacts")
+    .select("id, full_name, role_title, email, phone, contact_reason, reports_to")
+    .eq("company_id", companyId)
+    .order("full_name");
+  if (error) throw error;
+  return data ?? [];
+}
+
+export interface NewOrgChartContactInput {
+  companyId: string;
+  fullName: string;
+  roleTitle: string;
+  contactReason: string;
+  email: string;
+  phone: string;
+  reportsTo: string | null;
+}
+
+export async function addOrgChartContact(input: NewOrgChartContactInput) {
+  const { error } = await supabase.from("contacts").insert({
+    company_id: input.companyId,
+    full_name: input.fullName.trim(),
+    role_title: input.roleTitle.trim() || null,
+    contact_reason: input.contactReason.trim() || null,
+    email: input.email.trim() || null,
+    phone: input.phone.trim() || null,
+    reports_to: input.reportsTo,
+  });
+  if (error) throw error;
+}

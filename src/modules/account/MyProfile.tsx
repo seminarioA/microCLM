@@ -94,10 +94,17 @@ export function MyProfile() {
 
           <div className="form-group">
             <label htmlFor="my-role">
-              <ShieldCheck size={13} strokeWidth={2} /> Cargo / rol
+              <ShieldCheck size={13} strokeWidth={2} /> Cargo
             </label>
             <input id="my-role" type="text" value={roleTitle} onChange={(e) => setRoleTitle(e.target.value)} />
           </div>
+
+          {profile?.role === "admin" && (
+            <div className="form-group">
+              <label>Rol</label>
+              <span className="myprofile__role-badge">Administrador</span>
+            </div>
+          )}
 
           <div className="form-group">
             <label>

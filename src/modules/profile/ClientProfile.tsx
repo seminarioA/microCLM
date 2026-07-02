@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Briefcase,
@@ -13,7 +13,7 @@ import {
   Tag,
 } from "lucide-react";
 import { ModuleHeader } from "../../components/layout/ModuleHeader";
-import { SECTOR_LABEL } from "../../data/mockData";
+import { useSectors } from "../../hooks/useSectors";
 import {
   addTimelineEvent,
   fetchLeadProfile,
@@ -58,6 +58,9 @@ function ProfilesList({ onSelect }: { onSelect: (id: string) => void }) {
   const [leads, setLeads] = useState<LeadRecord[]>([]);
   const [stages, setStages] = useState<PipelineStage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sectorFilter, setSectorFilter] = useState("all");
+  const [stageFilter, setStageFilter] = useState("all");
+  const { sectors, labelOf } = useSectors();
 
   useEffect(() => {
     Promise.all([fetchLeads(), fetchStages()])
@@ -68,30 +71,67 @@ function ProfilesList({ onSelect }: { onSelect: (id: string) => void }) {
       .finally(() => setLoading(false));
   }, []);
 
+  const filteredLeads = useMemo(() => {
+    return leads.filter((lead) => {
+      if (sectorFilter !== "all" && (lead.sector ?? "") !== sectorFilter) return false;
+      if (stageFilter !== "all" && lead.stage_id !== stageFilter) return false;
+      return true;
+    });
+  }, [leads, sectorFilter, stageFilter]);
+
   if (loading) return <p className="osint-empty">Cargando perfiles...</p>;
   if (leads.length === 0) return <p className="osint-empty">Aún no hay leads registrados en el pipeline.</p>;
 
   const stageLabel = (stageId: string) => stages.find((s) => s.id === stageId)?.label ?? "Sin etapa";
 
   return (
-    <div className="profiles-list panel">
-      {leads.map((lead) => (
-        <button type="button" key={lead.id} className="profiles-list__row" onClick={() => onSelect(lead.id)}>
-          <img
-            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(lead.contact?.full_name ?? "?")}&background=1c1b17&color=F5F3E8&size=64`}
-            alt={lead.contact?.full_name ?? "Sin nombre"}
-          />
-          <div className="profiles-list__info">
-            <strong>{lead.contact?.full_name ?? "Sin contacto"}</strong>
-            <span>{lead.company?.name ?? "Sin empresa"}</span>
-          </div>
-          <span className={`badge badge-${lead.sector ?? "software"}`}>
-            {SECTOR_LABEL[lead.sector ?? ""] ?? "Sin rubro"}
-          </span>
-          <span className="stage-badge">{stageLabel(lead.stage_id)}</span>
-        </button>
-      ))}
-    </div>
+    <>
+      <div className="profiles-filters">
+        <div className="dash-filter-group">
+          <span className="eyebrow">Rubro</span>
+          <select className="dash-select" value={sectorFilter} onChange={(e) => setSectorFilter(e.target.value)}>
+            <option value="all">Todos</option>
+            {sectors.map((s) => (
+              <option key={s.key} value={s.key}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="dash-filter-group">
+          <span className="eyebrow">Etapa</span>
+          <select className="dash-select" value={stageFilter} onChange={(e) => setStageFilter(e.target.value)}>
+            <option value="all">Todas</option>
+            {stages.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {filteredLeads.length === 0 ? (
+        <p className="osint-empty">Ningún perfil coincide con los filtros seleccionados.</p>
+      ) : (
+        <div className="profiles-list panel">
+          {filteredLeads.map((lead) => (
+            <button type="button" key={lead.id} className="profiles-list__row" onClick={() => onSelect(lead.id)}>
+              <img
+                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(lead.contact?.full_name ?? "?")}&background=1c1b17&color=F5F3E8&size=64`}
+                alt={lead.contact?.full_name ?? "Sin nombre"}
+              />
+              <div className="profiles-list__info">
+                <strong>{lead.contact?.full_name ?? "Sin contacto"}</strong>
+                <span>{lead.company?.name ?? "Sin empresa"}</span>
+              </div>
+              <span className={`badge badge-${lead.sector ?? ""}`}>{labelOf(lead.sector)}</span>
+              <span className="stage-badge">{stageLabel(lead.stage_id)}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </>
   );
 }
 
@@ -102,6 +142,7 @@ export function ClientProfile({ leadId }: ClientProfileProps) {
   const [loading, setLoading] = useState(false);
   const [note, setNote] = useState("");
   const [editing, setEditing] = useState(false);
+  const { labelOf } = useSectors();
 
   useEffect(() => {
     setSelectedId(leadId);
@@ -225,9 +266,7 @@ export function ClientProfile({ leadId }: ClientProfileProps) {
               <Tag size={15} strokeWidth={1.75} />
               <div>
                 <small>Rubro</small>
-                <span className={`badge badge-${profile.sector ?? "software"}`}>
-                  {SECTOR_LABEL[profile.sector ?? ""] ?? "Sin rubro"}
-                </span>
+                <span className={`badge badge-${profile.sector ?? ""}`}>{labelOf(profile.sector)}</span>
               </div>
             </div>
             <div className="detail-row">
