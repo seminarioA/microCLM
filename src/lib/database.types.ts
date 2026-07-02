@@ -284,6 +284,42 @@ export type Database = {
         };
         Relationships: [];
       };
+      tenant_settings: {
+        Row: {
+          color_accent: string;
+          color_accent_deep: string;
+          color_amber: string;
+          color_legado: string;
+          color_moss: string;
+          color_moss_light: string;
+          color_terracotta: string;
+          id: number;
+          updated_at: string;
+        };
+        Insert: {
+          color_accent?: string;
+          color_accent_deep?: string;
+          color_amber?: string;
+          color_legado?: string;
+          color_moss?: string;
+          color_moss_light?: string;
+          color_terracotta?: string;
+          id?: number;
+          updated_at?: string;
+        };
+        Update: {
+          color_accent?: string;
+          color_accent_deep?: string;
+          color_amber?: string;
+          color_legado?: string;
+          color_moss?: string;
+          color_moss_light?: string;
+          color_terracotta?: string;
+          id?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       timeline_events: {
         Row: {
           created_at: string;

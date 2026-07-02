@@ -3,15 +3,18 @@ import { Camera, CheckCircle2, Mail, Save, ShieldCheck, User } from "lucide-reac
 import { ModuleHeader } from "../../components/layout/ModuleHeader";
 import { useAuth } from "../../auth/AuthContext";
 import { updateProfile, uploadAvatar } from "../../lib/crm";
+import { supabase } from "../../lib/supabaseClient";
 import "./MyProfile.css";
 
 export function MyProfile() {
   const { profile, session, refreshProfile } = useAuth();
   const [fullName, setFullName] = useState(profile?.full_name ?? "");
   const [roleTitle, setRoleTitle] = useState(profile?.role_title ?? "");
+  const [email, setEmail] = useState(session?.user.email ?? "");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [emailChangeRequested, setEmailChangeRequested] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -31,8 +34,17 @@ export function MyProfile() {
     setSaving(true);
     setError(null);
     setSaved(false);
+    setEmailChangeRequested(false);
     try {
       await updateProfile(session!.user.id, { full_name: fullName.trim(), role_title: roleTitle.trim() });
+
+      const trimmedEmail = email.trim();
+      if (trimmedEmail && trimmedEmail !== session!.user.email) {
+        const { error: emailError } = await supabase.auth.updateUser({ email: trimmedEmail });
+        if (emailError) throw emailError;
+        setEmailChangeRequested(true);
+      }
+
       await refreshProfile();
       setSaved(true);
       window.setTimeout(() => setSaved(false), 3000);
@@ -101,17 +113,25 @@ export function MyProfile() {
 
           {profile?.role === "admin" && (
             <div className="form-group">
-              <label>Rol</label>
-              <span className="myprofile__role-badge">Administrador</span>
+              <label>
+                <ShieldCheck size={13} strokeWidth={2} /> Rol
+              </label>
+              <input type="text" value="Administrador" disabled />
             </div>
           )}
 
           <div className="form-group">
-            <label>
+            <label htmlFor="my-email">
               <Mail size={13} strokeWidth={2} /> Correo
             </label>
-            <input type="email" value={session.user.email ?? ""} disabled />
+            <input id="my-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
+
+          {emailChangeRequested && (
+            <span className="myprofile__email-notice">
+              Te enviamos un correo de confirmación a la nueva dirección. El cambio se aplica al confirmarlo.
+            </span>
+          )}
 
           {error && <span className="field-error">{error}</span>}
 

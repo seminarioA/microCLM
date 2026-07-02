@@ -104,7 +104,9 @@
   font-size: 15px;
   font-weight: 500;
   margin-bottom: var(--space-1);
-  white-space: nowrap;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .sidebar__role {
@@ -205,6 +207,27 @@
 .sidebar.is-collapsed .sidebar__footer-btn span,
 .sidebar.is-collapsed .sidebar__footer > span {
   display: none;
+}
+
+/* El avatar compactado queda del mismo tamaño que los íconos de la nav de abajo. */
+.sidebar.is-collapsed .sidebar__profile {
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.sidebar.is-collapsed .sidebar__avatar {
+  width: 36px;
+  height: 36px;
+}
+
+.sidebar.is-collapsed .sidebar__avatar-edit {
+  width: 15px;
+  height: 15px;
+}
+
+.sidebar.is-collapsed .sidebar__status-dot {
+  width: 7px;
+  height: 7px;
 }
 
 .sidebar.is-collapsed .sidebar__nav-item,

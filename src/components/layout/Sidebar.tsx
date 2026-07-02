@@ -10,6 +10,7 @@ import {
   PanelLeftOpen,
   PieChart,
   Radar,
+  Settings as SettingsIcon,
   ShieldCheck,
   UserPlus,
 } from "lucide-react";
@@ -28,6 +29,12 @@ const NAV_ITEMS: { id: ModuleId; label: string; icon: typeof Columns3 }[] = [
   { id: "profiles", label: "Perfiles", icon: IdCard },
 ];
 
+const ADMIN_NAV_ITEM: { id: ModuleId; label: string; icon: typeof Columns3 } = {
+  id: "settings",
+  label: "Configuración",
+  icon: SettingsIcon,
+};
+
 const COLLAPSE_KEY = "microclm-sidebar-collapsed";
 
 interface SidebarProps {
@@ -43,6 +50,7 @@ export function Sidebar({ active, onSelect }: SidebarProps) {
 
   const displayName = profile?.full_name ?? session?.user.email ?? "Usuario";
   const cargo = profile?.role_title ?? "Sin cargo";
+  const navItems = profile?.role === "admin" ? [...NAV_ITEMS, ADMIN_NAV_ITEM] : NAV_ITEMS;
   const avatarSrc =
     profile?.avatar_url ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=1c1b17&color=F5F3E8&size=128&bold=true`;
@@ -111,7 +119,7 @@ export function Sidebar({ active, onSelect }: SidebarProps) {
         </div>
 
         <nav className="sidebar__nav">
-          {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+          {navItems.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               type="button"
@@ -149,7 +157,7 @@ export function Sidebar({ active, onSelect }: SidebarProps) {
       </aside>
 
       <nav className="mobile-dock">
-        {NAV_ITEMS.map(({ id, icon: Icon }) => (
+        {navItems.map(({ id, icon: Icon }) => (
           <button
             key={id}
             type="button"

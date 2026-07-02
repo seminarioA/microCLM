@@ -512,6 +512,31 @@ export async function addOrgChartContact(input: NewOrgChartContactInput) {
   if (error) throw error;
 }
 
+export type TenantSettings = Database["public"]["Tables"]["tenant_settings"]["Row"];
+export type TenantSettingsInput = Partial<
+  Pick<
+    TenantSettings,
+    "color_accent" | "color_accent_deep" | "color_moss" | "color_moss_light" | "color_amber" | "color_terracotta" | "color_legado"
+  >
+>;
+
+export async function fetchTenantSettings(): Promise<TenantSettings> {
+  const { data, error } = await supabase.from("tenant_settings").select("*").eq("id", 1).single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateTenantSettings(input: TenantSettingsInput): Promise<TenantSettings> {
+  const { data, error } = await supabase
+    .from("tenant_settings")
+    .update({ ...input, updated_at: new Date().toISOString() })
+    .eq("id", 1)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 /** Busca el lead más reciente asociado a un contacto (para navegar a su perfil desde el Organigrama). */
 export async function fetchLeadIdForContact(contactId: string): Promise<string | null> {
   const { data, error } = await supabase

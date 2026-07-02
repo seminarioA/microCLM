@@ -39,3 +39,25 @@ export function colorForKey(key: string, palette: string[] = accentPalette()): s
   for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
   return palette[hash % palette.length] || palette[0];
 }
+
+export interface TenantColorOverrides {
+  color_accent: string;
+  color_accent_deep: string;
+  color_moss: string;
+  color_moss_light: string;
+  color_amber: string;
+  color_terracotta: string;
+  color_legado: string;
+}
+
+/** Sobrescribe en caliente las variables CSS de marca (tokens.css sigue siendo el default de fábrica). */
+export function applyTenantColors(colors: TenantColorOverrides): void {
+  const root = document.documentElement.style;
+  root.setProperty("--color-accent", colors.color_accent);
+  root.setProperty("--color-accent-deep", colors.color_accent_deep);
+  root.setProperty("--color-moss", colors.color_moss);
+  root.setProperty("--color-moss-light", colors.color_moss_light);
+  root.setProperty("--color-amber", colors.color_amber);
+  root.setProperty("--color-terracotta", colors.color_terracotta);
+  root.setProperty("--color-legado", colors.color_legado);
+}
