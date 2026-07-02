@@ -2,11 +2,12 @@ import { useState } from "react";
 import { Sidebar } from "./components/layout/Sidebar";
 import { KanbanBoard } from "./modules/kanban/KanbanBoard";
 import { LeadForm } from "./modules/leads/LeadForm";
+import { OsintProspecting } from "./modules/osint/OsintProspecting";
 import { Dashboard } from "./modules/dashboard/Dashboard";
 import { ClientProfile } from "./modules/profile/ClientProfile";
 import "./App.css";
 
-export type ModuleId = "kanban" | "form" | "dashboard" | "profile";
+export type ModuleId = "kanban" | "form" | "osint" | "dashboard" | "profile";
 
 function App() {
   const [active, setActive] = useState<ModuleId>("kanban");
@@ -17,6 +18,7 @@ function App() {
       <main className="app-main">
         {active === "kanban" && <KanbanBoard />}
         {active === "form" && <LeadForm />}
+        {active === "osint" && <OsintProspecting />}
         {active === "dashboard" && <Dashboard />}
         {active === "profile" && <ClientProfile />}
       </main>

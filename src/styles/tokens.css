@@ -42,3 +42,18 @@
   --transition-fast: 150ms ease;
   --transition-base: 220ms ease;
 }
+
+/* — Modo oscuro — */
+:root[data-theme="dark"] {
+  --color-bg: #17160f;
+  --color-surface: #201e16;
+  --color-ink: #f2efe2;
+  --color-ink-soft: #b6b19d;
+  --color-ink-faint: #837f6c;
+  --color-line: #35331f;
+  --color-line-strong: #46422a;
+  --color-accent-tint: rgba(242, 116, 5, 0.16);
+  --color-moss: #6cad34;
+  --color-danger: #e2694a;
+  --color-success: var(--color-moss);
+}

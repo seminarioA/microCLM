@@ -1,10 +1,12 @@
-import { Columns3, IdCard, PieChart, ShieldCheck, UserPlus } from "lucide-react";
+import { Columns3, IdCard, Moon, PieChart, Radar, ShieldCheck, Sun, UserPlus } from "lucide-react";
 import type { ModuleId } from "../../App";
+import { useTheme } from "../../theme/ThemeContext";
 import "./Sidebar.css";
 
 const NAV_ITEMS: { id: ModuleId; label: string; icon: typeof Columns3 }[] = [
   { id: "kanban", label: "Tablero", icon: Columns3 },
   { id: "form", label: "Captación", icon: UserPlus },
+  { id: "osint", label: "Prospección", icon: Radar },
   { id: "dashboard", label: "Dashboard", icon: PieChart },
   { id: "profile", label: "Perfil", icon: IdCard },
 ];
@@ -15,6 +17,8 @@ interface SidebarProps {
 }
 
 export function Sidebar({ active, onSelect }: SidebarProps) {
+  const { theme, toggleTheme } = useTheme();
+
   return (
     <aside className="sidebar">
       <div className="sidebar__profile">
@@ -46,6 +50,15 @@ export function Sidebar({ active, onSelect }: SidebarProps) {
       </nav>
 
       <div className="sidebar__footer">
+        <button
+          type="button"
+          className="sidebar__theme-toggle"
+          onClick={toggleTheme}
+          title={theme === "light" ? "Activar modo oscuro" : "Activar modo claro"}
+        >
+          {theme === "light" ? <Moon size={14} strokeWidth={1.75} /> : <Sun size={14} strokeWidth={1.75} />}
+          <span>{theme === "light" ? "Modo oscuro" : "Modo claro"}</span>
+        </button>
         <span>microCLM · La Segunda Mordida</span>
       </div>
     </aside>

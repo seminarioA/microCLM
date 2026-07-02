@@ -3,6 +3,7 @@ import { Bar, Doughnut } from "react-chartjs-2";
 import { ArrowDown, Building2, Clock, FileSpreadsheet, FileText, Filter, Users } from "lucide-react";
 import { ModuleHeader } from "../../components/layout/ModuleHeader";
 import { funnelStages } from "../../data/mockData";
+import { useTheme } from "../../theme/ThemeContext";
 import "./chartSetup";
 import "./Dashboard.css";
 
@@ -39,6 +40,10 @@ const rubroData = {
 
 export function Dashboard() {
   const [period, setPeriod] = useState("week");
+  const { theme } = useTheme();
+  const gridColor = theme === "dark" ? "rgba(242, 239, 226, 0.08)" : "#e6e2d4";
+  const tickColor = theme === "dark" ? "#8a8570" : "#9b9888";
+  const tickColorStrong = theme === "dark" ? "#c9c4b0" : "#6f6d61";
 
   return (
     <section>
@@ -130,12 +135,12 @@ export function Dashboard() {
                 scales: {
                   y: {
                     beginAtZero: true,
-                    grid: { color: "#e6e2d4" },
-                    ticks: { color: "#9b9888", font: { size: 11 } },
+                    grid: { color: gridColor },
+                    ticks: { color: tickColor, font: { size: 11 } },
                   },
                   x: {
                     grid: { display: false },
-                    ticks: { color: "#6f6d61", font: { size: 11 } },
+                    ticks: { color: tickColorStrong, font: { size: 11 } },
                   },
                 },
               }}
@@ -158,7 +163,7 @@ export function Dashboard() {
                 plugins: {
                   legend: {
                     position: "bottom",
-                    labels: { padding: 14, usePointStyle: true, pointStyle: "circle", color: "#6f6d61", font: { size: 11 } },
+                    labels: { padding: 14, usePointStyle: true, pointStyle: "circle", color: tickColorStrong, font: { size: 11 } },
                   },
                 },
                 cutout: "62%",
