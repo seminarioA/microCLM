@@ -1,5 +1,20 @@
 # microCLM
 
+<div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+  <img src="https://iconic-api.onrender.com/dark/react" width="48px" title="React" />
+  <img src="https://iconic-api.onrender.com/dark/typescript" width="48px" title="TypeScript" />
+  <img src="https://iconic-api.onrender.com/dark/vite" width="48px" title="Vite" />
+  <img src="https://iconic-api.onrender.com/dark/postgresql" width="48px" title="Postgres (Supabase)" />
+  <img src="https://iconic-api.onrender.com/dark/deno" width="48px" title="Deno (Edge Functions)" />
+  <img src="https://iconic-api.onrender.com/dark/duckduckgo" width="48px" title="DuckDuckGo (OSINT)" />
+  <img src="https://iconic-api.onrender.com/dark/vercel" width="48px" title="Vercel" />
+  <img src="https://iconic-api.onrender.com/dark/git" width="48px" title="Git" />
+  <img src="https://iconic-api.onrender.com/dark/github" width="48px" title="GitHub" />
+  <img src="https://iconic-api.onrender.com/dark/github-actions" width="48px" title="GitHub Actions" />
+</div>
+
+<sub>Iconos: <a href="https://github.com/YuheshPandian/ICONIC">ICONIC</a> de YuheshPandian.</sub>
+
 microCLM es un CLM/CRM de pipeline comercial genérico: **React + TypeScript + Vite** en el frontend y **Supabase** (Postgres + Auth + Storage + Edge Functions) como backend, sin servidor propio. La marca — colores, nombre del tenant — es configuración, no código: hoy lo está implementando **La Segunda Mordida (LSM)**, con un lenguaje de diseño minimalista de inspiración japonesa, pero cualquier equipo puede adoptarlo cambiando su configuración de marca (ver [Configuración](#configuración-de-marca)).
 
 ## Módulos
