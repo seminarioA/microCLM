@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { ModuleHeader } from "../../components/layout/ModuleHeader";
 import { SECTOR_LABEL } from "../../data/mockData";
+import { createLeadFromForm } from "../../lib/crm";
 import "./LeadForm.css";
 
 const LOADING_TEXTS = [
@@ -56,6 +57,7 @@ export function LeadForm() {
   const [touched, setTouched] = useState<Partial<Record<keyof FormValues, boolean>>>({});
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
   const [leadCode, setLeadCode] = useState("");
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const timers = useRef<number[]>([]);
 
   useEffect(() => {
@@ -72,13 +74,14 @@ export function LeadForm() {
     setErrors((e) => ({ ...e, [field]: undefined }));
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const nextErrors = validate(values);
     setErrors(nextErrors);
     setTouched({ email: true, name: true, empresa: true, rubro: true });
     if (Object.keys(nextErrors).length > 0) return;
 
+    setSubmitError(null);
     setStep("loading");
     setLoadingTextIndex(0);
 
@@ -89,18 +92,31 @@ export function LeadForm() {
     }, 500);
     timers.current.push(interval);
 
-    const timeout = window.setTimeout(() => {
+    const minDuration = new Promise((resolve) => window.setTimeout(resolve, 2400));
+    const creation = createLeadFromForm({
+      name: values.name,
+      email: values.email,
+      company: values.empresa,
+      sector: values.rubro,
+    });
+
+    try {
+      const [created] = await Promise.all([creation, minDuration]);
       window.clearInterval(interval);
-      setLeadCode("LEAD-2026-" + String(Math.floor(1000 + Math.random() * 9000)));
+      setLeadCode(created.code);
       setStep("success");
-    }, 3000);
-    timers.current.push(timeout);
+    } catch (err) {
+      window.clearInterval(interval);
+      setSubmitError(err instanceof Error ? err.message : "No se pudo registrar el lead");
+      setStep("form");
+    }
   }
 
   function handleReset() {
     setValues(EMPTY_FORM);
     setErrors({});
     setTouched({});
+    setSubmitError(null);
     setStep("form");
   }
 
@@ -121,6 +137,7 @@ export function LeadForm() {
               <>
                 <h2>Registra un nuevo lead</h2>
                 <p className="leadform-desc">Completa los datos y deja que la IA enriquezca la información.</p>
+                {submitError && <span className="field-error leadform-submit-error">{submitError}</span>}
                 <form onSubmit={handleSubmit} noValidate>
                   <div className="form-group">
                     <label htmlFor="email">

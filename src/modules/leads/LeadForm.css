@@ -3,6 +3,11 @@
   justify-content: center;
 }
 
+.leadform-submit-error {
+  display: block;
+  margin: -8px 0 var(--space-4);
+}
+
 .leadform-card {
   width: 100%;
   max-width: 440px;
