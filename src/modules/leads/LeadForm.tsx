@@ -14,7 +14,8 @@ import {
 } from "lucide-react";
 import { ModuleHeader } from "../../components/layout/ModuleHeader";
 import { SECTOR_LABEL } from "../../data/mockData";
-import { createLeadFromForm } from "../../lib/crm";
+import { createLeadFromForm, createNotification } from "../../lib/crm";
+import { NameAutocomplete } from "../../components/shared/NameAutocomplete";
 import "./LeadForm.css";
 
 const LOADING_TEXTS = [
@@ -105,6 +106,12 @@ export function LeadForm() {
       window.clearInterval(interval);
       setLeadCode(created.code);
       setStep("success");
+      createNotification({
+        title: "Nuevo lead captado",
+        message: `${values.name.trim()} (${values.empresa.trim()}) ingresó al pipeline`,
+        icon: "clock",
+        leadId: created.leadId,
+      }).catch(() => {});
     } catch (err) {
       window.clearInterval(interval);
       setSubmitError(err instanceof Error ? err.message : "No se pudo registrar el lead");
@@ -159,13 +166,12 @@ export function LeadForm() {
                     <label htmlFor="name">
                       <User size={13} strokeWidth={2} /> Nombre completo <span className="required">*</span>
                     </label>
-                    <input
+                    <NameAutocomplete
                       id="name"
-                      type="text"
                       placeholder="Nombre y apellido"
                       value={values.name}
                       className={touched.name && errors.name ? "is-error" : ""}
-                      onChange={(e) => handleChange("name", e.target.value)}
+                      onChange={(v) => handleChange("name", v)}
                       onBlur={() => handleBlur("name")}
                     />
                     {touched.name && errors.name && <span className="field-error">{errors.name}</span>}

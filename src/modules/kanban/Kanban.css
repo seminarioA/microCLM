@@ -47,12 +47,65 @@
   color: var(--color-legado);
 }
 
+.kanban-column__header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .kanban-column__count {
   font-size: 11px;
   font-weight: 500;
   color: var(--color-ink-faint);
   min-width: 18px;
   text-align: center;
+}
+
+.kanban-column__collapse {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-ink-faint);
+  background: transparent;
+}
+
+.kanban-column__collapse:hover {
+  color: var(--color-accent-deep);
+  background: var(--color-accent-tint);
+}
+
+.kanban-column.is-collapsed {
+  flex: 0 0 40px;
+}
+
+.kanban-column__expand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+  padding: var(--space-4) 0;
+  border: none;
+  background: transparent;
+  color: var(--color-ink-soft);
+}
+
+.kanban-column__expand:hover {
+  color: var(--color-accent-deep);
+}
+
+.kanban-column__expand span:nth-child(2) {
+  writing-mode: vertical-rl;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .kanban-column__cards {

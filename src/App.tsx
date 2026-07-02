@@ -6,11 +6,12 @@ import { LeadForm } from "./modules/leads/LeadForm";
 import { OsintProspecting } from "./modules/osint/OsintProspecting";
 import { Dashboard } from "./modules/dashboard/Dashboard";
 import { ClientProfile } from "./modules/profile/ClientProfile";
+import { MyProfile } from "./modules/account/MyProfile";
 import { useAuth } from "./auth/AuthContext";
 import { Login } from "./auth/Login";
 import "./App.css";
 
-export type ModuleId = "kanban" | "form" | "osint" | "dashboard" | "profile";
+export type ModuleId = "kanban" | "form" | "osint" | "dashboard" | "profiles" | "myProfile";
 
 function App() {
   const [active, setActive] = useState<ModuleId>("kanban");
@@ -22,7 +23,7 @@ function App() {
 
   function handleSelectLead(leadId: string) {
     setSelectedLeadId(leadId);
-    setActive("profile");
+    setActive("profiles");
   }
 
   return (
@@ -34,7 +35,8 @@ function App() {
         {active === "form" && <LeadForm />}
         {active === "osint" && <OsintProspecting />}
         {active === "dashboard" && <Dashboard />}
-        {active === "profile" && <ClientProfile leadId={selectedLeadId ?? undefined} />}
+        {active === "profiles" && <ClientProfile leadId={selectedLeadId ?? undefined} />}
+        {active === "myProfile" && <MyProfile />}
       </main>
     </div>
   );

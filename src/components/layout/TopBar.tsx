@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Moon, Search, Sun, UserSearch } from "lucide-react";
 import { useTheme } from "../../theme/ThemeContext";
 import { searchLeads, type LeadSearchResult } from "../../lib/crm";
+import { NotificationBell } from "./NotificationBell";
 import "./TopBar.css";
 
 interface TopBarProps {
@@ -90,14 +91,17 @@ export function TopBar({ onSelectLead }: TopBarProps) {
         )}
       </div>
 
-      <button
-        type="button"
-        className="topbar__theme-toggle"
-        onClick={toggleTheme}
-        title={theme === "light" ? "Activar modo oscuro" : "Activar modo claro"}
-      >
-        {theme === "light" ? <Moon size={15} strokeWidth={1.75} /> : <Sun size={15} strokeWidth={1.75} />}
-      </button>
+      <div className="topbar__actions">
+        <NotificationBell onSelectLead={onSelectLead} />
+        <button
+          type="button"
+          className="topbar__theme-toggle"
+          onClick={toggleTheme}
+          title={theme === "light" ? "Activar modo oscuro" : "Activar modo claro"}
+        >
+          {theme === "light" ? <Moon size={15} strokeWidth={1.75} /> : <Sun size={15} strokeWidth={1.75} />}
+        </button>
+      </div>
     </div>
   );
 }

@@ -10,6 +10,7 @@ import {
   UserSearch,
 } from "lucide-react";
 import { ModuleHeader } from "../../components/layout/ModuleHeader";
+import { NameAutocomplete } from "../../components/shared/NameAutocomplete";
 import { runOsintSearch, type OsintSearchProfile, type OsintSignal } from "../../lib/crm";
 import "./Osint.css";
 
@@ -91,14 +92,13 @@ export function OsintProspecting() {
             <label htmlFor="osint-name">
               <UserSearch size={13} strokeWidth={2} /> Nombre completo <span className="required">*</span>
             </label>
-            <input
+            <NameAutocomplete
               id="osint-name"
-              type="text"
               placeholder="Ej. Diego Silva"
               value={name}
               className={nameError ? "is-error" : ""}
-              onChange={(e) => {
-                setName(e.target.value);
+              onChange={(v) => {
+                setName(v);
                 setNameError(false);
               }}
             />

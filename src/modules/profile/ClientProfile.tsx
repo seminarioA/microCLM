@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import {
+  ArrowLeft,
   Briefcase,
   Building2,
   CalendarClock,
@@ -13,7 +14,17 @@ import {
 } from "lucide-react";
 import { ModuleHeader } from "../../components/layout/ModuleHeader";
 import { SECTOR_LABEL } from "../../data/mockData";
-import { addTimelineEvent, fetchLeadProfile, fetchTimeline, type LeadProfile, type TimelineEvent } from "../../lib/crm";
+import {
+  addTimelineEvent,
+  fetchLeadProfile,
+  fetchLeads,
+  fetchStages,
+  fetchTimeline,
+  type LeadProfile,
+  type LeadRecord,
+  type PipelineStage,
+  type TimelineEvent,
+} from "../../lib/crm";
 import { EditProfileModal } from "./EditProfileModal";
 import "./ClientProfile.css";
 
@@ -43,22 +54,69 @@ interface ClientProfileProps {
   leadId?: string;
 }
 
+function ProfilesList({ onSelect }: { onSelect: (id: string) => void }) {
+  const [leads, setLeads] = useState<LeadRecord[]>([]);
+  const [stages, setStages] = useState<PipelineStage[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([fetchLeads(), fetchStages()])
+      .then(([leadsData, stagesData]) => {
+        setLeads(leadsData);
+        setStages(stagesData);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <p className="osint-empty">Cargando perfiles...</p>;
+  if (leads.length === 0) return <p className="osint-empty">Aún no hay leads registrados en el pipeline.</p>;
+
+  const stageLabel = (stageId: string) => stages.find((s) => s.id === stageId)?.label ?? "Sin etapa";
+
+  return (
+    <div className="profiles-list panel">
+      {leads.map((lead) => (
+        <button type="button" key={lead.id} className="profiles-list__row" onClick={() => onSelect(lead.id)}>
+          <img
+            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(lead.contact?.full_name ?? "?")}&background=1c1b17&color=F5F3E8&size=64`}
+            alt={lead.contact?.full_name ?? "Sin nombre"}
+          />
+          <div className="profiles-list__info">
+            <strong>{lead.contact?.full_name ?? "Sin contacto"}</strong>
+            <span>{lead.company?.name ?? "Sin empresa"}</span>
+          </div>
+          <span className={`badge badge-${lead.sector ?? "software"}`}>
+            {SECTOR_LABEL[lead.sector ?? ""] ?? "Sin rubro"}
+          </span>
+          <span className="stage-badge">{stageLabel(lead.stage_id)}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function ClientProfile({ leadId }: ClientProfileProps) {
+  const [selectedId, setSelectedId] = useState<string | undefined>(leadId);
   const [profile, setProfile] = useState<LeadProfile | null>(null);
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [note, setNote] = useState("");
   const [editing, setEditing] = useState(false);
 
+  useEffect(() => {
+    setSelectedId(leadId);
+  }, [leadId]);
+
   const load = useCallback(() => {
+    if (!selectedId) return;
     setLoading(true);
-    fetchLeadProfile(leadId)
+    fetchLeadProfile(selectedId)
       .then(async (p) => {
         setProfile(p);
         setTimeline(p ? await fetchTimeline(p.leadId) : []);
       })
       .finally(() => setLoading(false));
-  }, [leadId]);
+  }, [selectedId]);
 
   useEffect(() => {
     load();
@@ -73,20 +131,28 @@ export function ClientProfile({ leadId }: ClientProfileProps) {
     setNote("");
   }
 
-  if (loading) {
+  if (!selectedId) {
     return (
       <section>
-        <ModuleHeader title="Perfil del Cliente" subtitle="Historial completo de interacciones" />
-        <p className="osint-empty">Cargando perfil...</p>
+        <ModuleHeader title="Perfiles" subtitle="Directorio de contactos y leads del pipeline" />
+        <ProfilesList onSelect={setSelectedId} />
       </section>
     );
   }
 
-  if (!profile) {
+  if (loading || !profile) {
     return (
       <section>
-        <ModuleHeader title="Perfil del Cliente" subtitle="Historial completo de interacciones" />
-        <p className="osint-empty">Aún no hay leads registrados en el pipeline.</p>
+        <ModuleHeader
+          title="Perfil del Cliente"
+          subtitle="Historial completo de interacciones"
+          actions={
+            <button type="button" className="btn btn-outline" onClick={() => setSelectedId(undefined)}>
+              <ArrowLeft size={13} strokeWidth={2} /> Volver a Perfiles
+            </button>
+          }
+        />
+        <p className="osint-empty">Cargando perfil...</p>
       </section>
     );
   }
@@ -97,9 +163,14 @@ export function ClientProfile({ leadId }: ClientProfileProps) {
         title="Perfil del Cliente"
         subtitle="Historial completo de interacciones"
         actions={
-          <button type="button" className="btn btn-outline" onClick={() => setEditing(true)}>
-            <Pencil size={13} strokeWidth={2} /> Editar perfil
-          </button>
+          <>
+            <button type="button" className="btn btn-outline" onClick={() => setSelectedId(undefined)}>
+              <ArrowLeft size={13} strokeWidth={2} /> Volver a Perfiles
+            </button>
+            <button type="button" className="btn btn-outline" onClick={() => setEditing(true)}>
+              <Pencil size={13} strokeWidth={2} /> Editar perfil
+            </button>
+          </>
         }
       />
 

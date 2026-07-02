@@ -156,6 +156,7 @@ export type Database = {
           created_at: string;
           icon: string | null;
           id: string;
+          lead_id: string | null;
           message: string | null;
           read: boolean;
           title: string;
@@ -165,6 +166,7 @@ export type Database = {
           created_at?: string;
           icon?: string | null;
           id?: string;
+          lead_id?: string | null;
           message?: string | null;
           read?: boolean;
           title: string;
@@ -174,12 +176,20 @@ export type Database = {
           created_at?: string;
           icon?: string | null;
           id?: string;
+          lead_id?: string | null;
           message?: string | null;
           read?: boolean;
           title?: string;
           user_id?: string | null;
         };
         Relationships: [
+          {
+            foreignKeyName: "notifications_lead_id_fkey";
+            columns: ["lead_id"];
+            isOneToOne: false;
+            referencedRelation: "leads";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "notifications_user_id_fkey";
             columns: ["user_id"];

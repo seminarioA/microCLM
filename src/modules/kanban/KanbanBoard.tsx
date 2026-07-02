@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import {
   CalendarCheck,
   CheckCircle,
+  ChevronLeft,
+  ChevronRight,
   FileText,
   Handshake,
   Phone,
@@ -11,9 +13,15 @@ import {
   XCircle,
 } from "lucide-react";
 import { ModuleHeader } from "../../components/layout/ModuleHeader";
-import { NotificationBell } from "../../components/layout/NotificationBell";
 import { KanbanCard } from "./KanbanCard";
-import { fetchLeads, fetchStages, updateLeadStage, type LeadRecord, type PipelineStage } from "../../lib/crm";
+import {
+  createNotification,
+  fetchLeads,
+  fetchStages,
+  updateLeadStage,
+  type LeadRecord,
+  type PipelineStage,
+} from "../../lib/crm";
 import "./Kanban.css";
 
 const STAGE_ICONS: Record<string, typeof UserPlus> = {
@@ -34,6 +42,7 @@ export function KanbanBoard() {
   const [error, setError] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     Promise.all([fetchStages(), fetchLeads()])
@@ -44,6 +53,15 @@ export function KanbanBoard() {
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
+
+  function toggleCollapse(stageId: string) {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(stageId)) next.delete(stageId);
+      else next.add(stageId);
+      return next;
+    });
+  }
 
   function handleDragStart(e: React.DragEvent, cardId: string) {
     setDraggingId(cardId);
@@ -56,16 +74,26 @@ export function KanbanBoard() {
     setDragOverStage(null);
   }
 
-  function handleDrop(e: React.DragEvent, targetStageId: string) {
+  function handleDrop(e: React.DragEvent, targetStage: PipelineStage) {
     e.preventDefault();
     setDragOverStage(null);
     if (!draggingId) return;
 
     const leadId = draggingId;
+    const movedLead = leads.find((l) => l.id === leadId);
     setDraggingId(null);
-    setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, stage_id: targetStageId } : l)));
+    if (!movedLead || movedLead.stage_id === targetStage.id) return;
 
-    updateLeadStage(leadId, targetStageId).catch((err) => setError(err.message));
+    setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, stage_id: targetStage.id } : l)));
+
+    updateLeadStage(leadId, targetStage.id).catch((err) => setError(err.message));
+
+    createNotification({
+      title: "Cambio de etapa",
+      message: `${movedLead.company?.name ?? "Un lead"} (${movedLead.contact?.full_name ?? "sin contacto"}) avanzó a ${targetStage.label}`,
+      icon: "arrow",
+      leadId,
+    }).catch(() => {});
   }
 
   if (loading) {
@@ -83,12 +111,9 @@ export function KanbanBoard() {
         title="Tablero Kanban"
         subtitle="Pipeline de ventas · Trazabilidad completa"
         actions={
-          <>
-            <NotificationBell />
-            <button type="button" className="btn btn-primary">
-              <Plus size={14} strokeWidth={2} /> Nuevo lead
-            </button>
-          </>
+          <button type="button" className="btn btn-primary">
+            <Plus size={14} strokeWidth={2} /> Nuevo lead
+          </button>
         }
       />
 
@@ -98,6 +123,25 @@ export function KanbanBoard() {
         {stages.map((stage) => {
           const Icon = STAGE_ICONS[stage.key] ?? UserPlus;
           const cards = leads.filter((l) => l.stage_id === stage.id);
+          const isCollapsed = collapsed.has(stage.id);
+
+          if (isCollapsed) {
+            return (
+              <div key={stage.id} className="kanban-column is-collapsed">
+                <button
+                  type="button"
+                  className="kanban-column__expand"
+                  onClick={() => toggleCollapse(stage.id)}
+                  title="Expandir columna"
+                >
+                  <ChevronRight size={14} strokeWidth={2} />
+                  <span>{stage.label}</span>
+                  <span className="kanban-column__count">{cards.length}</span>
+                </button>
+              </div>
+            );
+          }
+
           return (
             <div
               key={stage.id}
@@ -108,13 +152,23 @@ export function KanbanBoard() {
                 setDragOverStage(stage.id);
               }}
               onDragLeave={() => setDragOverStage((s) => (s === stage.id ? null : s))}
-              onDrop={(e) => handleDrop(e, stage.id)}
+              onDrop={(e) => handleDrop(e, stage)}
             >
               <div className={"kanban-column__header" + (stage.variant ? ` is-${stage.variant}` : "")}>
                 <h3>
                   <Icon size={13} strokeWidth={2} /> {stage.label}
                 </h3>
-                <span className="kanban-column__count">{cards.length}</span>
+                <div className="kanban-column__header-right">
+                  <span className="kanban-column__count">{cards.length}</span>
+                  <button
+                    type="button"
+                    className="kanban-column__collapse"
+                    onClick={() => toggleCollapse(stage.id)}
+                    title="Minimizar columna"
+                  >
+                    <ChevronLeft size={13} strokeWidth={2} />
+                  </button>
+                </div>
               </div>
               <div className="kanban-column__cards">
                 {cards.map((card) => (

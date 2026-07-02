@@ -325,6 +325,42 @@ export async function markNotificationRead(id: string) {
   if (error) throw error;
 }
 
+export interface NewNotificationInput {
+  title: string;
+  message: string;
+  icon: "clock" | "alert" | "arrow";
+  leadId?: string;
+}
+
+/** Crea una notificación real disparada por un evento del CRM (nuevo lead, cambio de etapa, etc). */
+export async function createNotification(input: NewNotificationInput) {
+  const { error } = await supabase.from("notifications").insert({
+    title: input.title,
+    message: input.message,
+    icon: input.icon,
+    lead_id: input.leadId ?? null,
+  });
+  if (error) throw error;
+}
+
+/** Sugiere nombres de contactos ya existentes que coinciden con lo escrito. */
+export async function searchContactNames(query: string): Promise<string[]> {
+  const q = query.trim();
+  if (q.length < 2) return [];
+  const { data, error } = await supabase
+    .from("contacts")
+    .select("full_name")
+    .ilike("full_name", `%${q}%`)
+    .limit(6);
+  if (error) throw error;
+  return Array.from(new Set((data ?? []).map((c) => c.full_name)));
+}
+
+export async function updateProfile(userId: string, input: { full_name: string; role_title: string }) {
+  const { error } = await supabase.from("profiles").update(input).eq("id", userId);
+  if (error) throw error;
+}
+
 /** Sube la foto de perfil al bucket "avatars" y actualiza profiles.avatar_url. */
 export async function uploadAvatar(userId: string, file: File): Promise<string> {
   const ext = file.name.split(".").pop()?.toLowerCase() || "png";

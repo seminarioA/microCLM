@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Camera, Columns3, IdCard, LogOut, PieChart, Radar, ShieldCheck, UserPlus } from "lucide-react";
+import { Camera, CircleUserRound, Columns3, IdCard, LogOut, PieChart, Radar, ShieldCheck, UserPlus } from "lucide-react";
 import type { ModuleId } from "../../App";
 import { useAuth } from "../../auth/AuthContext";
 import { uploadAvatar } from "../../lib/crm";
@@ -10,7 +10,8 @@ const NAV_ITEMS: { id: ModuleId; label: string; icon: typeof Columns3 }[] = [
   { id: "form", label: "Captación", icon: UserPlus },
   { id: "osint", label: "Prospección", icon: Radar },
   { id: "dashboard", label: "Dashboard", icon: PieChart },
-  { id: "profile", label: "Perfil", icon: IdCard },
+  { id: "profiles", label: "Perfiles", icon: IdCard },
+  { id: "myProfile", label: "Mi Perfil", icon: CircleUserRound },
 ];
 
 interface SidebarProps {
