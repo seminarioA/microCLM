@@ -14,8 +14,9 @@ import {
 } from "lucide-react";
 import { ModuleHeader } from "../../components/layout/ModuleHeader";
 import { useSectors } from "../../hooks/useSectors";
-import { createLeadFromForm, createNotification, createSector } from "../../lib/crm";
+import { createLeadFromForm, createNotification, createSector, type CompanySuggestion } from "../../lib/crm";
 import { NameAutocomplete } from "../../components/shared/NameAutocomplete";
+import { CompanyAutocomplete } from "../../components/shared/CompanyAutocomplete";
 import "./LeadForm.css";
 
 const LOADING_TEXTS = [
@@ -61,6 +62,7 @@ export function LeadForm() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [addingSector, setAddingSector] = useState(false);
   const [newSectorLabel, setNewSectorLabel] = useState("");
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string | undefined>(undefined);
   const { sectors, labelOf, addSector } = useSectors();
   const timers = useRef<number[]>([]);
 
@@ -76,6 +78,11 @@ export function LeadForm() {
   function handleChange(field: keyof FormValues, value: string) {
     setValues((v) => ({ ...v, [field]: value }));
     setErrors((e) => ({ ...e, [field]: undefined }));
+    if (field === "empresa") setSelectedCompanyId(undefined);
+  }
+
+  function handleSelectCompany(company: CompanySuggestion) {
+    setSelectedCompanyId(company.id);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -102,6 +109,7 @@ export function LeadForm() {
       email: values.email,
       company: values.empresa,
       sector: values.rubro,
+      companyId: selectedCompanyId,
     });
 
     try {
@@ -127,6 +135,7 @@ export function LeadForm() {
     setErrors({});
     setTouched({});
     setSubmitError(null);
+    setSelectedCompanyId(undefined);
     setStep("form");
   }
 
@@ -194,16 +203,19 @@ export function LeadForm() {
                     <label htmlFor="empresa">
                       <Building2 size={13} strokeWidth={2} /> Empresa <span className="required">*</span>
                     </label>
-                    <input
+                    <CompanyAutocomplete
                       id="empresa"
-                      type="text"
                       placeholder="Nombre de la empresa"
                       value={values.empresa}
                       className={touched.empresa && errors.empresa ? "is-error" : ""}
-                      onChange={(e) => handleChange("empresa", e.target.value)}
+                      onChange={(v) => handleChange("empresa", v)}
+                      onSelectCompany={handleSelectCompany}
                       onBlur={() => handleBlur("empresa")}
                     />
                     {touched.empresa && errors.empresa && <span className="field-error">{errors.empresa}</span>}
+                    {selectedCompanyId && (
+                      <span className="leadform-company-linked">Vinculado a empresa existente</span>
+                    )}
                   </div>
 
                   <div className="form-group">

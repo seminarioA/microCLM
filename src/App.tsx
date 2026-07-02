@@ -10,6 +10,7 @@ import { ClientProfile } from "./modules/profile/ClientProfile";
 import { MyProfile } from "./modules/account/MyProfile";
 import { useAuth } from "./auth/AuthContext";
 import { Login } from "./auth/Login";
+import { fetchLeadIdForContact } from "./lib/crm";
 import "./App.css";
 
 export type ModuleId = "kanban" | "form" | "osint" | "orgchart" | "dashboard" | "profiles" | "myProfile";
@@ -27,6 +28,16 @@ function App() {
     setActive("profiles");
   }
 
+  async function handleSelectContact(contactId: string) {
+    const leadId = await fetchLeadIdForContact(contactId);
+    if (leadId) {
+      handleSelectLead(leadId);
+    } else {
+      setSelectedLeadId(null);
+      setActive("profiles");
+    }
+  }
+
   return (
     <div className="app-shell">
       <Sidebar active={active} onSelect={setActive} />
@@ -36,7 +47,7 @@ function App() {
           {active === "kanban" && <KanbanBoard />}
           {active === "form" && <LeadForm />}
           {active === "osint" && <OsintProspecting />}
-          {active === "orgchart" && <OrgChart />}
+          {active === "orgchart" && <OrgChart onSelectContact={handleSelectContact} />}
           {active === "dashboard" && <Dashboard />}
           {active === "profiles" && <ClientProfile leadId={selectedLeadId ?? undefined} />}
           {active === "myProfile" && <MyProfile />}

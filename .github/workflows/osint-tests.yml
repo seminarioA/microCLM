@@ -2,7 +2,7 @@ name: OSINT search tests
 
 on:
   push:
-    branches: [main, master, dev]
+    branches: [main, dev]
     paths:
       - "supabase/functions/osint-search/**"
       - "package.json"

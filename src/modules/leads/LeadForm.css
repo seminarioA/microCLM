@@ -244,3 +244,10 @@
   color: var(--color-ink);
   font-size: 12.5px;
 }
+
+.leadform-company-linked {
+  display: block;
+  margin-top: 5px;
+  font-size: 11px;
+  color: var(--color-moss);
+}

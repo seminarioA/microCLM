@@ -42,3 +42,31 @@
     padding: var(--space-4) var(--space-4) 96px;
   }
 }
+
+/* — Impresión de un perfil (Perfiles > detalle) — */
+@media print {
+  .sidebar,
+  .mobile-dock,
+  .topbar,
+  .module-header__actions,
+  .quick-action {
+    display: none !important;
+  }
+
+  .app-main {
+    padding: 0;
+  }
+
+  .profile-layout--printable {
+    display: block;
+  }
+
+  .profile-panel {
+    border: none;
+    margin-bottom: var(--space-5);
+  }
+
+  .timeline-item__content {
+    break-inside: avoid;
+  }
+}

@@ -60,6 +60,8 @@ export interface NewLeadInput {
   email: string;
   company: string;
   sector: string;
+  /** Si el usuario eligió una empresa existente de las sugerencias, su id exacto (evita duplicar por variantes de escritura como "UTP" / "Universidad Tecnológica del Perú"). */
+  companyId?: string;
 }
 
 export interface CreatedLead {
@@ -69,15 +71,32 @@ export interface CreatedLead {
   code: string;
 }
 
+export interface CompanySuggestion {
+  id: string;
+  name: string;
+}
+
+/** Sugiere empresas ya existentes que coinciden con lo escrito, para que el usuario vincule siempre a la misma entidad. */
+export async function searchCompanies(query: string): Promise<CompanySuggestion[]> {
+  const q = query.trim();
+  if (q.length < 2) return [];
+  const { data, error } = await supabase.from("companies").select("id, name").ilike("name", `%${q}%`).limit(6);
+  if (error) throw error;
+  return data ?? [];
+}
+
 /** Crea (o reutiliza) la empresa, el contacto y el lead en la etapa "Lead captado". */
 export async function createLeadFromForm(input: NewLeadInput): Promise<CreatedLead> {
-  const { data: existingCompany } = await supabase
-    .from("companies")
-    .select("id")
-    .ilike("name", input.company.trim())
-    .maybeSingle();
+  let companyId = input.companyId;
+  if (!companyId) {
+    const { data: existingCompany } = await supabase
+      .from("companies")
+      .select("id")
+      .ilike("name", input.company.trim())
+      .maybeSingle();
+    companyId = existingCompany?.id;
+  }
 
-  let companyId = existingCompany?.id;
   if (!companyId) {
     const { data: newCompany, error: companyError } = await supabase
       .from("companies")
@@ -491,4 +510,17 @@ export async function addOrgChartContact(input: NewOrgChartContactInput) {
     reports_to: input.reportsTo,
   });
   if (error) throw error;
+}
+
+/** Busca el lead más reciente asociado a un contacto (para navegar a su perfil desde el Organigrama). */
+export async function fetchLeadIdForContact(contactId: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("leads")
+    .select("id")
+    .eq("contact_id", contactId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.id ?? null;
 }

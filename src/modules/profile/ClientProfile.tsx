@@ -9,11 +9,13 @@ import {
   MapPin,
   Pencil,
   Phone,
+  Printer,
   StickyNote,
   Tag,
 } from "lucide-react";
 import { ModuleHeader } from "../../components/layout/ModuleHeader";
 import { useSectors } from "../../hooks/useSectors";
+import { mailtoLink, whatsappLink } from "../../lib/contactLinks";
 import {
   addTimelineEvent,
   fetchLeadProfile,
@@ -211,11 +213,14 @@ export function ClientProfile({ leadId }: ClientProfileProps) {
             <button type="button" className="btn btn-outline" onClick={() => setEditing(true)}>
               <Pencil size={13} strokeWidth={2} /> Editar perfil
             </button>
+            <button type="button" className="btn btn-outline" onClick={() => window.print()}>
+              <Printer size={13} strokeWidth={2} /> Imprimir
+            </button>
           </>
         }
       />
 
-      <div className="profile-layout">
+      <div className="profile-layout profile-layout--printable">
         <aside className="profile-panel panel">
           <div className="profile-panel__pic">
             <img
@@ -245,14 +250,31 @@ export function ClientProfile({ leadId }: ClientProfileProps) {
               <Mail size={15} strokeWidth={1.75} />
               <div>
                 <small>Correo</small>
-                <p>{profile.contact.email ?? "Sin correo"}</p>
+                {profile.contact.email ? (
+                  <a className="detail-link" href={mailtoLink(profile.contact.email)}>
+                    {profile.contact.email}
+                  </a>
+                ) : (
+                  <p>Sin correo</p>
+                )}
               </div>
             </div>
             <div className="detail-row">
               <Phone size={15} strokeWidth={1.75} />
               <div>
                 <small>Teléfono</small>
-                <p>{profile.contact.phone ?? "Sin teléfono"}</p>
+                {profile.contact.phone ? (
+                  <a
+                    className="detail-link"
+                    href={whatsappLink(profile.contact.phone)}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {profile.contact.phone}
+                  </a>
+                ) : (
+                  <p>Sin teléfono</p>
+                )}
               </div>
             </div>
             <div className="detail-row">

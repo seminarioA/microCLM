@@ -128,7 +128,7 @@ export function Sidebar({ active, onSelect }: SidebarProps) {
         <div className="sidebar__account">
           <button
             type="button"
-            className={"sidebar__nav-item" + (active === "myProfile" ? " is-active" : "")}
+            className={"sidebar__nav-item sidebar__nav-item--account" + (active === "myProfile" ? " is-active" : "")}
             onClick={() => onSelect("myProfile")}
             title="Mi Perfil"
           >

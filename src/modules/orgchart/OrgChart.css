@@ -46,16 +46,16 @@
 
 .orgchart-tree {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
+  justify-content: center;
+  gap: var(--space-6);
   overflow-x: auto;
-  padding-bottom: var(--space-4);
+  padding: var(--space-2) var(--space-4) var(--space-5);
 }
 
 .orgnode {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .orgnode__card {
@@ -67,6 +67,17 @@
   border: 1px solid var(--color-line);
   border-radius: var(--radius-md);
   min-width: 240px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+.orgnode__card:hover,
+.orgnode__card:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: 0 8px 20px rgba(28, 27, 23, 0.1);
+  transform: translateY(-2px);
+  outline: none;
 }
 
 .orgnode__card img {
@@ -108,20 +119,72 @@
   margin-top: 2px;
 }
 
-.orgnode__contact span {
+.orgnode__contact a {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   font-size: 10.5px;
   color: var(--color-ink-faint);
+  text-decoration: none;
 }
 
+.orgnode__contact a:hover {
+  color: var(--color-accent-deep);
+  text-decoration: underline;
+}
+
+/* — Árbol visual: líneas conectoras entre padre e hijos — */
 .orgnode__children {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  margin-top: var(--space-3);
-  margin-left: 28px;
-  padding-left: var(--space-5);
-  border-left: 2px solid var(--color-line);
+  justify-content: center;
+  position: relative;
+  padding-top: var(--space-6);
+  margin-top: var(--space-6);
+}
+
+.orgnode__children::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 1px;
+  height: var(--space-6);
+  background: var(--color-line-strong);
+}
+
+.orgnode__child {
+  position: relative;
+  padding: 0 var(--space-4);
+}
+
+.orgnode__child::before {
+  content: "";
+  position: absolute;
+  top: calc(-1 * var(--space-6));
+  left: 50%;
+  width: 1px;
+  height: var(--space-6);
+  background: var(--color-line-strong);
+}
+
+.orgnode__child::after {
+  content: "";
+  position: absolute;
+  top: calc(-1 * var(--space-6));
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--color-line-strong);
+}
+
+.orgnode__child:first-child::after {
+  left: 50%;
+}
+
+.orgnode__child:last-child::after {
+  right: 50%;
+}
+
+.orgnode__child:only-child::after {
+  display: none;
 }

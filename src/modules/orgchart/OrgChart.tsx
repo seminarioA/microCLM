@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Mail, Phone, Plus, Tag, UserPlus, Users } from "lucide-react";
 import { ModuleHeader } from "../../components/layout/ModuleHeader";
 import { NameAutocomplete } from "../../components/shared/NameAutocomplete";
+import { mailtoLink, whatsappLink } from "../../lib/contactLinks";
 import {
   addOrgChartContact,
   fetchCompaniesForOrgChart,
@@ -29,10 +30,17 @@ function buildTree(contacts: OrgChartContact[]): TreeNode[] {
   return roots;
 }
 
-function OrgNode({ node }: { node: TreeNode }) {
+function OrgNode({ node, onSelectContact }: { node: TreeNode; onSelectContact: (contactId: string) => void }) {
   return (
     <div className="orgnode">
-      <div className="orgnode__card">
+      <div
+        className="orgnode__card"
+        role="button"
+        tabIndex={0}
+        onClick={() => onSelectContact(node.id)}
+        onKeyDown={(e) => e.key === "Enter" && onSelectContact(node.id)}
+        title="Ver perfil en Perfiles"
+      >
         <img
           src={`https://ui-avatars.com/api/?name=${encodeURIComponent(node.full_name)}&background=1c1b17&color=F5F3E8&size=64`}
           alt={node.full_name}
@@ -47,14 +55,19 @@ function OrgNode({ node }: { node: TreeNode }) {
           )}
           <div className="orgnode__contact">
             {node.email && (
-              <span>
+              <a href={mailtoLink(node.email)} onClick={(e) => e.stopPropagation()}>
                 <Mail size={11} strokeWidth={2} /> {node.email}
-              </span>
+              </a>
             )}
             {node.phone && (
-              <span>
+              <a
+                href={whatsappLink(node.phone)}
+                target="_blank"
+                rel="noreferrer"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <Phone size={11} strokeWidth={2} /> {node.phone}
-              </span>
+              </a>
             )}
           </div>
         </div>
@@ -62,7 +75,9 @@ function OrgNode({ node }: { node: TreeNode }) {
       {node.children.length > 0 && (
         <div className="orgnode__children">
           {node.children.map((child) => (
-            <OrgNode key={child.id} node={child} />
+            <div className="orgnode__child" key={child.id}>
+              <OrgNode node={child} onSelectContact={onSelectContact} />
+            </div>
           ))}
         </div>
       )}
@@ -70,7 +85,11 @@ function OrgNode({ node }: { node: TreeNode }) {
   );
 }
 
-export function OrgChart() {
+interface OrgChartProps {
+  onSelectContact: (contactId: string) => void;
+}
+
+export function OrgChart({ onSelectContact }: OrgChartProps) {
   const [companies, setCompanies] = useState<OrgChartCompany[]>([]);
   const [companyId, setCompanyId] = useState("");
   const [contacts, setContacts] = useState<OrgChartContact[]>([]);
@@ -212,7 +231,7 @@ export function OrgChart() {
       {companyId && !loading && tree.length > 0 && (
         <div className="orgchart-tree">
           {tree.map((node) => (
-            <OrgNode key={node.id} node={node} />
+            <OrgNode key={node.id} node={node} onSelectContact={onSelectContact} />
           ))}
         </div>
       )}
