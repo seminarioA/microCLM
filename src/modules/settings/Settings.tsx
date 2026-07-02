@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, Palette, Save } from "lucide-react";
+import { CheckCircle2, Palette, RotateCcw, Save } from "lucide-react";
 import { ModuleHeader } from "../../components/layout/ModuleHeader";
 import { useAuth } from "../../auth/AuthContext";
 import { fetchTenantSettings, updateTenantSettings, type TenantSettingsInput } from "../../lib/crm";
@@ -15,6 +15,17 @@ const COLOR_FIELDS: { key: keyof TenantSettingsInput; label: string }[] = [
   { key: "color_terracotta", label: "Cuarto acento" },
   { key: "color_legado", label: "Quinto acento" },
 ];
+
+/** Paleta de fábrica de microCLM: tinta sumi y madera/piedra natural, minimalismo japonés sin marca de ningún tenant. */
+const DEFAULT_TENANT_COLORS: TenantSettingsInput = {
+  color_accent: "#1c1b17",
+  color_accent_deep: "#3a3830",
+  color_moss: "#6f6d61",
+  color_moss_light: "#9b9888",
+  color_amber: "#8a7f6a",
+  color_terracotta: "#5c6b5d",
+  color_legado: "#7a6a58",
+};
 
 export function Settings() {
   const { profile } = useAuth();
@@ -42,6 +53,10 @@ export function Settings() {
 
   function handleChange(key: keyof TenantSettingsInput, value: string) {
     setValues((v) => (v ? { ...v, [key]: value } : v));
+  }
+
+  function handleRestoreDefaults() {
+    setValues((v) => (v ? { ...v, ...DEFAULT_TENANT_COLORS } : v));
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -74,8 +89,10 @@ export function Settings() {
       {!loading && values && (
         <form className="settings-panel panel" onSubmit={handleSave}>
           <p className="settings-desc">
-            <Palette size={13} strokeWidth={2} /> Estos colores ya están cargados con la configuración actual de La
-            Segunda Mordida. Cambiarlos aquí actualiza la marca en toda la app para todo el equipo.
+            <Palette size={13} strokeWidth={2} /> Estos colores ya están cargados con la configuración actual del
+            equipo. Cambiarlos aquí actualiza la marca en toda la app para todo el equipo, o usa "Restaurar valores
+            por defecto" para volver a la paleta de fábrica de microCLM (minimalismo japonés, sin marca de ningún
+            tenant en particular).
           </p>
 
           <div className="settings-grid">
@@ -102,9 +119,14 @@ export function Settings() {
 
           {error && <span className="field-error">{error}</span>}
 
-          <button type="submit" className="btn btn-primary" disabled={saving}>
-            <Save size={13} strokeWidth={2} /> {saving ? "Guardando..." : "Guardar cambios"}
-          </button>
+          <div className="settings-actions">
+            <button type="submit" className="btn btn-primary" disabled={saving}>
+              <Save size={13} strokeWidth={2} /> {saving ? "Guardando..." : "Guardar cambios"}
+            </button>
+            <button type="button" className="btn btn-outline" onClick={handleRestoreDefaults}>
+              <RotateCcw size={13} strokeWidth={2} /> Restaurar valores por defecto
+            </button>
+          </div>
 
           {saved && (
             <span className="myprofile__saved">
