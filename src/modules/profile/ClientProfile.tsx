@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   Briefcase,
   Building2,
   CalendarClock,
+  Camera,
   Link2,
   Mail,
   MapPin,
@@ -22,6 +23,7 @@ import {
   fetchLeads,
   fetchStages,
   fetchTimeline,
+  uploadContactAvatar,
   type LeadProfile,
   type LeadRecord,
   type PipelineStage,
@@ -120,7 +122,10 @@ function ProfilesList({ onSelect }: { onSelect: (id: string) => void }) {
           {filteredLeads.map((lead) => (
             <button type="button" key={lead.id} className="profiles-list__row" onClick={() => onSelect(lead.id)}>
               <img
-                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(lead.contact?.full_name ?? "?")}&background=1c1b17&color=F5F3E8&size=64`}
+                src={
+                  lead.contact?.avatar_url ||
+                  `https://ui-avatars.com/api/?name=${encodeURIComponent(lead.contact?.full_name ?? "?")}&background=1c1b17&color=F5F3E8&size=64`
+                }
                 alt={lead.contact?.full_name ?? "Sin nombre"}
               />
               <div className="profiles-list__info">
@@ -144,6 +149,8 @@ export function ClientProfile({ leadId }: ClientProfileProps) {
   const [loading, setLoading] = useState(false);
   const [note, setNote] = useState("");
   const [editing, setEditing] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { labelOf } = useSectors();
 
   useEffect(() => {
@@ -172,6 +179,20 @@ export function ClientProfile({ leadId }: ClientProfileProps) {
     const entry = await addTimelineEvent(profile.leadId, type, `${label} registrada`, text);
     setTimeline((prev) => [entry, ...prev]);
     setNote("");
+  }
+
+  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !profile) return;
+
+    setUploadingPhoto(true);
+    try {
+      await uploadContactAvatar(profile.contactId, file);
+      load();
+    } finally {
+      setUploadingPhoto(false);
+    }
   }
 
   if (!selectedId) {
@@ -224,8 +245,27 @@ export function ClientProfile({ leadId }: ClientProfileProps) {
         <aside className="profile-panel panel">
           <div className="profile-panel__pic">
             <img
-              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(profile.contact.full_name)}&background=1c1b17&color=F5F3E8&size=96`}
+              src={
+                profile.contact.avatar_url ||
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.contact.full_name)}&background=1c1b17&color=F5F3E8&size=96`
+              }
               alt={profile.contact.full_name}
+            />
+            <button
+              type="button"
+              className="profile-panel__pic-edit"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingPhoto}
+              title="Cambiar foto"
+            >
+              <Camera size={13} strokeWidth={2} />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="profile-panel__pic-input"
+              onChange={handlePhotoChange}
             />
           </div>
           <h2 className="profile-panel__name">{profile.contact.full_name}</h2>

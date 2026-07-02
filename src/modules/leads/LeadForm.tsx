@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { ModuleHeader } from "../../components/layout/ModuleHeader";
 import { useSectors } from "../../hooks/useSectors";
-import { createLeadFromForm, createNotification, createSector, type CompanySuggestion } from "../../lib/crm";
+import { createLeadFromForm, createNotification, createSector, resolveCompany, type CompanySuggestion } from "../../lib/crm";
 import { NameAutocomplete } from "../../components/shared/NameAutocomplete";
 import { CompanyAutocomplete } from "../../components/shared/CompanyAutocomplete";
 import "./LeadForm.css";
@@ -103,13 +103,17 @@ export function LeadForm() {
     }, 500);
     timers.current.push(interval);
 
+    // No dependas de que el usuario haga click en una sugerencia: si la empresa
+    // escrita ya existe, se resuelve sola al enviar el formulario.
+    const companyId = selectedCompanyId ?? (await resolveCompany(values.empresa))?.id;
+
     const minDuration = new Promise((resolve) => window.setTimeout(resolve, 2400));
     const creation = createLeadFromForm({
       name: values.name,
       email: values.email,
       company: values.empresa,
       sector: values.rubro,
-      companyId: selectedCompanyId,
+      companyId,
     });
 
     try {

@@ -12,7 +12,7 @@ export interface LeadRecord {
   stage_id: string;
   source: string | null;
   value: number | null;
-  contact: { id: string; full_name: string } | null;
+  contact: { id: string; full_name: string; avatar_url: string | null } | null;
   company: { id: string; name: string } | null;
 }
 
@@ -31,7 +31,7 @@ export async function fetchLeads(): Promise<LeadRecord[]> {
   const { data, error } = await supabase
     .from("leads")
     .select(
-      "id, sector, closed, lost, created_at, stage_id, source, value, contact:contacts(id, full_name), company:companies(id, name)",
+      "id, sector, closed, lost, created_at, stage_id, source, value, contact:contacts(id, full_name, avatar_url), company:companies(id, name)",
     )
     .order("created_at", { ascending: false });
   if (error) throw error;
@@ -83,6 +83,21 @@ export async function searchCompanies(query: string): Promise<CompanySuggestion[
   const { data, error } = await supabase.from("companies").select("id, name").ilike("name", `%${q}%`).limit(6);
   if (error) throw error;
   return data ?? [];
+}
+
+/**
+ * Resuelve texto libre de empresa a una entidad ya existente, sin depender de
+ * que el usuario haga click en una sugerencia: si hay coincidencia exacta
+ * (sin importar mayúsculas) se usa esa; si no, la primera coincidencia
+ * parcial. Devuelve null si la empresa no existe todavía (se creará nueva).
+ */
+export async function resolveCompany(query: string): Promise<CompanySuggestion | null> {
+  const trimmed = query.trim();
+  if (!trimmed) return null;
+  const matches = await searchCompanies(trimmed);
+  if (matches.length === 0) return null;
+  const exact = matches.find((m) => m.name.toLowerCase() === trimmed.toLowerCase());
+  return exact ?? matches[0];
 }
 
 /** Crea (o reutiliza) la empresa, el contacto y el lead en la etapa "Lead captado". */
@@ -192,6 +207,7 @@ export interface LeadProfile {
     phone: string | null;
     role_title: string | null;
     linkedin_url: string | null;
+    avatar_url: string | null;
   };
   company: { name: string };
 }
@@ -230,7 +246,7 @@ export async function fetchLeadProfile(leadId?: string): Promise<LeadProfile | n
   const { data, error } = await supabase
     .from("leads")
     .select(
-      "id, contact_id, company_id, sector, stage:pipeline_stages(label), contact:contacts(full_name, email, phone, role_title, linkedin_url), company:companies(name)",
+      "id, contact_id, company_id, sector, stage:pipeline_stages(label), contact:contacts(full_name, email, phone, role_title, linkedin_url, avatar_url), company:companies(name)",
     )
     .eq("id", id)
     .single();
@@ -246,7 +262,14 @@ export async function fetchLeadProfile(leadId?: string): Promise<LeadProfile | n
     companyId: data.company_id,
     stageLabel: stage?.label ?? "Sin etapa",
     sector: data.sector,
-    contact: contact ?? { full_name: "Sin nombre", email: null, phone: null, role_title: null, linkedin_url: null },
+    contact: contact ?? {
+      full_name: "Sin nombre",
+      email: null,
+      phone: null,
+      role_title: null,
+      linkedin_url: null,
+      avatar_url: null,
+    },
     company: company ?? { name: "Sin empresa" },
   };
 }
@@ -394,6 +417,25 @@ export async function uploadAvatar(userId: string, file: File): Promise<string> 
   const publicUrl = `${data.publicUrl}?t=${Date.now()}`;
 
   const { error: updateError } = await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("id", userId);
+  if (updateError) throw updateError;
+
+  return publicUrl;
+}
+
+/** Sube manualmente la foto de un contacto (perfil de "Perfiles") al bucket "avatars". */
+export async function uploadContactAvatar(contactId: string, file: File): Promise<string> {
+  const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+  const path = `contacts/${contactId}/avatar.${ext}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("avatars")
+    .upload(path, file, { upsert: true, cacheControl: "3600" });
+  if (uploadError) throw uploadError;
+
+  const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+  const publicUrl = `${data.publicUrl}?t=${Date.now()}`;
+
+  const { error: updateError } = await supabase.from("contacts").update({ avatar_url: publicUrl }).eq("id", contactId);
   if (updateError) throw updateError;
 
   return publicUrl;

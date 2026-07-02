@@ -11,7 +11,8 @@ import {
 } from "lucide-react";
 import { ModuleHeader } from "../../components/layout/ModuleHeader";
 import { NameAutocomplete } from "../../components/shared/NameAutocomplete";
-import { runOsintSearch, type OsintSearchProfile, type OsintSignal } from "../../lib/crm";
+import { CompanyAutocomplete } from "../../components/shared/CompanyAutocomplete";
+import { resolveCompany, runOsintSearch, type CompanySuggestion, type OsintSearchProfile, type OsintSignal } from "../../lib/crm";
 import "./Osint.css";
 
 type Step = "idle" | "loading" | "result" | "error";
@@ -60,7 +61,18 @@ export function OsintProspecting() {
     }, 900);
 
     try {
-      const result = await runOsintSearch(name, company);
+      // No dependas de que el usuario haga click en una sugerencia: si la
+      // empresa escrita ya existe, se resuelve sola al lanzar la búsqueda.
+      let resolvedCompany = company.trim();
+      if (resolvedCompany) {
+        const match = await resolveCompany(resolvedCompany);
+        if (match) {
+          resolvedCompany = match.name;
+          setCompany(match.name);
+        }
+      }
+
+      const result = await runOsintSearch(name, resolvedCompany);
       setProfile(result);
       setStep("result");
     } catch (err) {
@@ -108,12 +120,12 @@ export function OsintProspecting() {
             <label htmlFor="osint-company">
               <Building2 size={13} strokeWidth={2} /> Empresa (opcional)
             </label>
-            <input
+            <CompanyAutocomplete
               id="osint-company"
-              type="text"
               placeholder="Ej. MegaCorp"
               value={company}
-              onChange={(e) => setCompany(e.target.value)}
+              onChange={setCompany}
+              onSelectCompany={(c: CompanySuggestion) => setCompany(c.name)}
             />
           </div>
           <button type="submit" className="btn btn-primary osint-search__submit" disabled={step === "loading"}>

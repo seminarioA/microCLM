@@ -38,6 +38,7 @@ export type Database = {
       };
       contacts: {
         Row: {
+          avatar_url: string | null;
           company_id: string | null;
           contact_reason: string | null;
           created_at: string;
@@ -50,6 +51,7 @@ export type Database = {
           role_title: string | null;
         };
         Insert: {
+          avatar_url?: string | null;
           company_id?: string | null;
           contact_reason?: string | null;
           created_at?: string;
@@ -62,6 +64,7 @@ export type Database = {
           role_title?: string | null;
         };
         Update: {
+          avatar_url?: string | null;
           company_id?: string | null;
           contact_reason?: string | null;
           created_at?: string;
