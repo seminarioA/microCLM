@@ -9,18 +9,20 @@ CLM (Client Lifecycle Management) de pipeline comercial.
 
 ## Módulos
 
-- **Tablero Kanban** — pipeline de ventas en 8 etapas, drag & drop, columnas colapsables, persistido en Postgres.
-- **Captación de Leads** — crea empresa/contacto/lead. El campo Empresa sugiere compañías existentes y las resuelve al enviar sin requerir click en la sugerencia (evita duplicar "UTP" / "Utp" / "Universidad Tecnológica del Perú" como empresas distintas). Rubro es una tabla dinámica, editable desde el formulario.
-- **Prospección OSINT** — una Edge Function consulta resultados HTML de DuckDuckGo; un parser propio (sin dependencias) clasifica presencia digital, datos de empresa, contacto estimado y menciones públicas. La empresa se autorresuelve contra `companies` al lanzar la búsqueda.
-- **Organigrama** *(módulo opcional, activable desde Marketplace)* — árbol visual de los contactos de una empresa, jerarquía "reporta a" y motivo de contacto. Click en un contacto abre su perfil en Perfiles si tiene un lead asociado.
-- **Dashboard** — KPIs, embudo de conversión, gráficos (Chart.js) sobre datos reales. Colores de series derivados de las variables de marca.
-- **Perfiles** — directorio de leads/contactos, filtros por rubro y etapa, vista lista/grilla. Detalle: timeline de interacciones, foto subible (Storage), correo (`mailto:`) y teléfono (WhatsApp) clicables, edición de datos, impresión.
-- **Mi Perfil** — nombre, cargo, foto, correo editable (flujo de confirmación de Supabase Auth), Rol visible solo para administradores.
-- **Configuración** *(solo administradores)* — colores de marca del tenant, precargados y editables en caliente para todo el equipo; botón para restaurar la paleta de fábrica.
-- **Marketplace de módulos** *(solo administradores)* — activa/desactiva módulos opcionales para todo el equipo.
-- **Notificaciones** — campanita in-app + notificaciones reales del navegador (Web Notifications API) vía Supabase Realtime.
-- **Autenticación** — Supabase Auth (email/password), sesión persistida.
-- **Modo oscuro**, **sidebar compactable**, dock estilo macOS en móvil.
+| Módulo | Descripción | Acceso |
+|---|---|---|
+| Tablero Kanban | Pipeline de ventas en 8 etapas, drag & drop, columnas colapsables, persistido en Postgres. | Todos |
+| Captación de Leads | Crea empresa/contacto/lead. Empresa sugiere compañías existentes y las resuelve al enviar sin requerir click en la sugerencia (evita duplicar "UTP" / "Utp" / "Universidad Tecnológica del Perú" como empresas distintas). Rubro es una tabla dinámica, editable desde el formulario. | Todos |
+| Prospección OSINT | Una Edge Function consulta resultados HTML de DuckDuckGo; un parser propio (sin dependencias) clasifica presencia digital, datos de empresa, contacto estimado y menciones públicas. La empresa se autorresuelve contra `companies` al lanzar la búsqueda. | Todos |
+| Organigrama | Árbol visual de los contactos de una empresa, jerarquía "reporta a" y motivo de contacto. Click en un contacto abre su perfil en Perfiles si tiene un lead asociado. | Todos (módulo opcional, activable desde Marketplace) |
+| Dashboard | KPIs, embudo de conversión, gráficos (Chart.js) sobre datos reales. Colores de series derivados de las variables de marca. | Todos |
+| Perfiles | Directorio de leads/contactos, filtros por rubro y etapa, vista lista/grilla. Detalle: timeline de interacciones, foto subible (Storage), correo (`mailto:`) y teléfono (WhatsApp) clicables, edición de datos, impresión. | Todos |
+| Mi Perfil | Nombre, cargo, foto, correo editable (flujo de confirmación de Supabase Auth), Rol visible solo para administradores. | Todos |
+| Configuración | Colores de marca del tenant, precargados y editables en caliente para todo el equipo; botón para restaurar la paleta de fábrica. | Administradores |
+| Marketplace de módulos | Activa/desactiva módulos opcionales para todo el equipo. | Administradores |
+| Notificaciones | Campanita in-app + notificaciones reales del navegador (Web Notifications API) vía Supabase Realtime. | Todos |
+| Autenticación | Supabase Auth (email/password), sesión persistida. | Todos |
+| Modo oscuro / sidebar compactable | Dock estilo macOS en móvil. | Todos |
 
 ## Stack
 
