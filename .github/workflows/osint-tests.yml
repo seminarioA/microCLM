@@ -26,5 +26,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run OSINT parsing/classification tests
+      # Corre dos suites:
+      # 1) osintSearch.test.ts - parseo/clasificación con fixtures HTML, sin red.
+      # 2) osintSearch.integration.test.ts - llama a la Edge Function ya
+      #    desplegada en Supabase (esa función es la que consulta a
+      #    DuckDuckGo desde la red de Supabase, no desde este runner, así
+      #    que no depende de la IP compartida de GitHub para evitar bloqueos).
+      #    Se salta sola si faltan los secrets de Supabase.
+      - name: Run OSINT parsing/classification + integration tests
         run: npx vitest run supabase/functions/osint-search --reporter=verbose
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
