@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import {
+  Brain,
   Camera,
   CircleUserRound,
   Columns3,
@@ -9,6 +10,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   PieChart,
+  Package,
   Radar,
   Settings as SettingsIcon,
   ShieldCheck,
@@ -28,6 +30,7 @@ const NAV_ITEMS: { id: ModuleId; label: string; icon: typeof Columns3 }[] = [
   { id: "osint", label: "Prospección", icon: Radar },
   { id: "dashboard", label: "Dashboard", icon: PieChart },
   { id: "profiles", label: "Perfiles", icon: IdCard },
+  { id: "catalog", label: "Catálogo", icon: Package },
   { id: "marketplace", label: "Marketplace", icon: Store },
 ];
 
@@ -35,6 +38,12 @@ const ORGCHART_NAV_ITEM: { id: ModuleId; label: string; icon: typeof Columns3 } 
   id: "orgchart",
   label: "Organigrama",
   icon: Network,
+};
+
+const SYNTHETIC_LEAD_NAV_ITEM: { id: ModuleId; label: string; icon: typeof Columns3 } = {
+  id: "syntheticLead",
+  label: "Lead Sintético",
+  icon: Brain,
 };
 
 const ADMIN_NAV_ITEMS: { id: ModuleId; label: string; icon: typeof Columns3 }[] = [
@@ -60,6 +69,7 @@ export function Sidebar({ active, onSelect }: SidebarProps) {
   const navItems = [
     ...NAV_ITEMS,
     ...(isEnabled("orgchart") ? [ORGCHART_NAV_ITEM] : []),
+    ...(isEnabled("synthetic_lead") ? [SYNTHETIC_LEAD_NAV_ITEM] : []),
     ...(profile?.role === "admin" ? ADMIN_NAV_ITEMS : []),
   ];
   const avatarSrc =

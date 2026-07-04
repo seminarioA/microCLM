@@ -1,4 +1,4 @@
-import { Network } from "lucide-react";
+import { Brain, Network } from "lucide-react";
 import { ModuleHeader } from "../../components/layout/ModuleHeader";
 import { useInstalledModules } from "../../hooks/useInstalledModules";
 import "./Marketplace.css";
@@ -17,6 +17,13 @@ const AVAILABLE_MODULES: MarketplaceModuleDef[] = [
     name: "Organigrama",
     description: "Mapa visual de los contactos de una empresa: jerarquía, cargos y motivo de contacto.",
     icon: Network,
+  },
+  {
+    key: "synthetic_lead",
+    name: "Lead Sintético",
+    description:
+      "Análisis con IA (Gemini) de un lead real: gustos, preferencias, producto/servicio recomendado del Catálogo, probabilidad de cierre y métricas.",
+    icon: Brain,
   },
 ];
 

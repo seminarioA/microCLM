@@ -156,6 +156,70 @@ export async function createLeadFromForm(input: NewLeadInput): Promise<CreatedLe
   return { leadId: lead.id, contactId: contact.id, companyId, code };
 }
 
+export interface OsintLeadInput {
+  name: string;
+  sector: string;
+  company?: string;
+  companyId?: string;
+  email?: string;
+  linkedinUrl?: string;
+}
+
+/** Convierte un perfil de Prospección OSINT en un lead real, en la etapa "Lead captado". */
+export async function createLeadFromOsint(input: OsintLeadInput): Promise<CreatedLead> {
+  const company = input.company?.trim();
+  let companyId = input.companyId;
+  if (!companyId && company) {
+    companyId = (await resolveCompany(company))?.id;
+  }
+  if (!companyId && company) {
+    const { data: newCompany, error: companyError } = await supabase
+      .from("companies")
+      .insert({ name: company, sector: input.sector })
+      .select("id")
+      .single();
+    if (companyError) throw companyError;
+    companyId = newCompany.id;
+  }
+
+  const { data: contact, error: contactError } = await supabase
+    .from("contacts")
+    .insert({
+      full_name: input.name.trim(),
+      email: input.email?.trim() || null,
+      linkedin_url: input.linkedinUrl?.trim() || null,
+      company_id: companyId ?? null,
+    })
+    .select("id")
+    .single();
+  if (contactError) throw contactError;
+
+  const { data: stage, error: stageError } = await supabase
+    .from("pipeline_stages")
+    .select("id")
+    .eq("key", "lead-captado")
+    .single();
+  if (stageError) throw stageError;
+
+  const { data: lead, error: leadError } = await supabase
+    .from("leads")
+    .insert({
+      contact_id: contact.id,
+      company_id: companyId ?? null,
+      stage_id: stage.id,
+      sector: input.sector,
+      source: "Prospección OSINT",
+    })
+    .select("id, created_at")
+    .single();
+  if (leadError) throw leadError;
+
+  const year = new Date(lead.created_at).getFullYear();
+  const code = `LEAD-${year}-${lead.id.slice(0, 4).toUpperCase()}`;
+
+  return { leadId: lead.id, contactId: contact.id, companyId: companyId ?? "", code };
+}
+
 export interface AnalyticsLead {
   id: string;
   stage_id: string;
@@ -669,4 +733,74 @@ export async function fetchEmailsByIds(ids: string[]): Promise<EmailRow[]> {
   const { data, error } = await supabase.from("emails").select("*").in("id", ids);
   if (error) throw error;
   return data ?? [];
+}
+
+export type ProductRow = Database["public"]["Tables"]["products"]["Row"];
+export type ProductInput = Pick<
+  Database["public"]["Tables"]["products"]["Insert"],
+  "name" | "description" | "category" | "price" | "status"
+>;
+
+export async function fetchProducts(): Promise<ProductRow[]> {
+  const { data, error } = await supabase.from("products").select("*").order("name", { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function createProduct(input: ProductInput): Promise<ProductRow> {
+  const { data, error } = await supabase.from("products").insert(input).select("*").single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateProduct(id: string, input: ProductInput): Promise<ProductRow> {
+  const { data, error } = await supabase.from("products").update(input).eq("id", id).select("*").single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteProduct(id: string): Promise<void> {
+  const { error } = await supabase.from("products").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export type LeadSyntheticInsight = Database["public"]["Tables"]["lead_synthetic_insights"]["Row"];
+
+/** Última corrida del análisis de IA para un lead (persona, producto recomendado, score, métricas). */
+export async function fetchLatestInsight(leadId: string): Promise<LeadSyntheticInsight | null> {
+  const { data, error } = await supabase
+    .from("lead_synthetic_insights")
+    .select("*")
+    .eq("lead_id", leadId)
+    .order("generated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Dispara la Edge Function que llama a Gemini con los datos reales del lead +
+ * el catálogo, y guarda el resultado estructurado (persona, producto
+ * recomendado, probabilidad de éxito, métricas) en `lead_synthetic_insights`.
+ */
+export async function generateLeadInsight(leadId: string): Promise<LeadSyntheticInsight> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const { data, error } = await supabase.functions.invoke("generate-lead-insight", {
+    body: { leadId, createdBy: session?.user.id ?? null },
+  });
+
+  if (error) {
+    if (error instanceof FunctionsHttpError) {
+      const body = await error.context.json().catch(() => null);
+      throw new Error(body?.error ?? error.message);
+    }
+    throw error;
+  }
+  if (data?.error) throw new Error(data.error);
+
+  return data.insight as LeadSyntheticInsight;
 }

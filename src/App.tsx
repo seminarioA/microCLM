@@ -10,6 +10,8 @@ import { ClientProfile } from "./modules/profile/ClientProfile";
 import { MyProfile } from "./modules/account/MyProfile";
 import { Settings } from "./modules/settings/Settings";
 import { Marketplace } from "./modules/marketplace/Marketplace";
+import { Catalog } from "./modules/catalog/Catalog";
+import { SyntheticLead } from "./modules/syntheticLead/SyntheticLead";
 import { useAuth } from "./auth/AuthContext";
 import { Login } from "./auth/Login";
 import { fetchLeadIdForContact, fetchTenantSettings } from "./lib/crm";
@@ -23,6 +25,8 @@ export type ModuleId =
   | "orgchart"
   | "dashboard"
   | "profiles"
+  | "catalog"
+  | "syntheticLead"
   | "myProfile"
   | "settings"
   | "marketplace";
@@ -69,6 +73,8 @@ function App() {
           {active === "orgchart" && <OrgChart onSelectContact={handleSelectContact} />}
           {active === "dashboard" && <Dashboard />}
           {active === "profiles" && <ClientProfile leadId={selectedLeadId ?? undefined} />}
+          {active === "catalog" && <Catalog />}
+          {active === "syntheticLead" && <SyntheticLead leadId={selectedLeadId ?? undefined} />}
           {active === "myProfile" && <MyProfile />}
           {active === "settings" && <Settings />}
           {active === "marketplace" && <Marketplace />}
