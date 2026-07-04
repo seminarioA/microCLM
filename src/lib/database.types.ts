@@ -341,11 +341,63 @@ export type Database = {
         };
         Relationships: [];
       };
+      emails: {
+        Row: {
+          body_html: string;
+          clicked_at: string | null;
+          contact_id: string | null;
+          created_at: string;
+          created_by: string | null;
+          error: string | null;
+          from_email: string;
+          id: string;
+          lead_id: string | null;
+          opened_at: string | null;
+          provider_message_id: string | null;
+          status: string;
+          subject: string;
+          to_email: string;
+        };
+        Insert: {
+          body_html: string;
+          clicked_at?: string | null;
+          contact_id?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          error?: string | null;
+          from_email: string;
+          id?: string;
+          lead_id?: string | null;
+          opened_at?: string | null;
+          provider_message_id?: string | null;
+          status?: string;
+          subject: string;
+          to_email: string;
+        };
+        Update: {
+          body_html?: string;
+          clicked_at?: string | null;
+          contact_id?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          error?: string | null;
+          from_email?: string;
+          id?: string;
+          lead_id?: string | null;
+          opened_at?: string | null;
+          provider_message_id?: string | null;
+          status?: string;
+          subject?: string;
+          to_email?: string;
+        };
+        Relationships: [];
+      };
       timeline_events: {
         Row: {
           created_at: string;
           created_by: string | null;
           description: string | null;
+          email_id: string | null;
           id: string;
           lead_id: string;
           title: string;
@@ -355,6 +407,7 @@ export type Database = {
           created_at?: string;
           created_by?: string | null;
           description?: string | null;
+          email_id?: string | null;
           id?: string;
           lead_id: string;
           title: string;
@@ -364,6 +417,7 @@ export type Database = {
           created_at?: string;
           created_by?: string | null;
           description?: string | null;
+          email_id?: string | null;
           id?: string;
           lead_id?: string;
           title?: string;

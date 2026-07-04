@@ -21,17 +21,20 @@ import { useSectors } from "../../hooks/useSectors";
 import { mailtoLink, whatsappLink } from "../../lib/contactLinks";
 import {
   addTimelineEvent,
+  fetchEmailsByIds,
   fetchLeadProfile,
   fetchLeads,
   fetchStages,
   fetchTimeline,
   uploadContactAvatar,
+  type EmailRow,
   type LeadProfile,
   type LeadRecord,
   type PipelineStage,
   type TimelineEvent,
 } from "../../lib/crm";
 import { EditProfileModal } from "./EditProfileModal";
+import { EmailComposeModal } from "./EmailComposeModal";
 import "./ClientProfile.css";
 
 const TIMELINE_ICON: Record<string, typeof Phone> = {
@@ -44,8 +47,15 @@ const TIMELINE_ICON: Record<string, typeof Phone> = {
 const QUICK_ACTIONS: { type: string; label: string }[] = [
   { type: "note", label: "Nota" },
   { type: "call", label: "Llamada" },
-  { type: "email", label: "Correo" },
 ];
+
+function EmailStatusBadge({ email }: { email: EmailRow }) {
+  if (email.clicked_at) return <span className="email-status-badge is-clicked">Clic</span>;
+  if (email.opened_at) return <span className="email-status-badge is-opened">Abierto</span>;
+  if (email.status === "sent") return <span className="email-status-badge is-sent">Enviado</span>;
+  if (email.status === "failed") return <span className="email-status-badge is-failed">No se pudo enviar</span>;
+  return <span className="email-status-badge is-queued">Enviando...</span>;
+}
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleString("es-PE", {
@@ -198,9 +208,11 @@ export function ClientProfile({ leadId }: ClientProfileProps) {
   const [selectedId, setSelectedId] = useState<string | undefined>(leadId);
   const [profile, setProfile] = useState<LeadProfile | null>(null);
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
+  const [emails, setEmails] = useState<Record<string, EmailRow>>({});
   const [loading, setLoading] = useState(false);
   const [note, setNote] = useState("");
   const [editing, setEditing] = useState(false);
+  const [composingEmail, setComposingEmail] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { labelOf } = useSectors();
@@ -215,7 +227,16 @@ export function ClientProfile({ leadId }: ClientProfileProps) {
     fetchLeadProfile(selectedId)
       .then(async (p) => {
         setProfile(p);
-        setTimeline(p ? await fetchTimeline(p.leadId) : []);
+        const events = p ? await fetchTimeline(p.leadId) : [];
+        setTimeline(events);
+
+        const emailIds = events.map((e) => e.email_id).filter((id): id is string => !!id);
+        if (emailIds.length > 0) {
+          const rows = await fetchEmailsByIds(emailIds);
+          setEmails(Object.fromEntries(rows.map((row) => [row.id, row])));
+        } else {
+          setEmails({});
+        }
       })
       .finally(() => setLoading(false));
   }, [selectedId]);
@@ -416,12 +437,23 @@ export function ClientProfile({ leadId }: ClientProfileProps) {
                   {a.label}
                 </button>
               ))}
+              <button
+                type="button"
+                className="btn btn-sm btn-outline"
+                onClick={() => setComposingEmail(true)}
+                disabled={!profile.contact.email}
+                title={profile.contact.email ? undefined : "Este contacto no tiene correo registrado"}
+              >
+                <Mail size={13} strokeWidth={2} />
+                Correo
+              </button>
             </div>
           </div>
 
           <div className="timeline">
             {timeline.map((item) => {
               const Icon = TIMELINE_ICON[item.type] ?? StickyNote;
+              const email = item.email_id ? emails[item.email_id] : undefined;
               return (
                 <div className="timeline-item" key={item.id}>
                   <div className={`timeline-item__icon is-${item.type}`}>
@@ -433,6 +465,7 @@ export function ClientProfile({ leadId }: ClientProfileProps) {
                       <span>{formatDate(item.created_at)}</span>
                     </div>
                     <p>{item.description}</p>
+                    {email && <EmailStatusBadge email={email} />}
                   </div>
                 </div>
               );
@@ -447,6 +480,19 @@ export function ClientProfile({ leadId }: ClientProfileProps) {
           onClose={() => setEditing(false)}
           onSaved={() => {
             setEditing(false);
+            load();
+          }}
+        />
+      )}
+
+      {composingEmail && profile.contact.email && (
+        <EmailComposeModal
+          to={profile.contact.email}
+          leadId={profile.leadId}
+          contactId={profile.contactId}
+          onClose={() => setComposingEmail(false)}
+          onSent={() => {
+            setComposingEmail(false);
             load();
           }}
         />

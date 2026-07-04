@@ -1,3 +1,4 @@
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { supabase } from "./supabaseClient";
 import type { Database } from "./database.types";
 
@@ -606,4 +607,66 @@ export async function setModuleEnabled(moduleKey: string, enabled: boolean): Pro
     .from("installed_modules")
     .upsert({ module_key: moduleKey, enabled, updated_at: new Date().toISOString() }, { onConflict: "module_key" });
   if (error) throw error;
+}
+
+export type EmailRow = Database["public"]["Tables"]["emails"]["Row"];
+
+export interface SendEmailInput {
+  leadId?: string;
+  contactId?: string;
+  to: string;
+  subject: string;
+  bodyHtml: string;
+}
+
+/**
+ * Envía un correo real (Edge Function -> Resend), con tracking de apertura y
+ * clics, y lo agrega al timeline del lead si se indica `leadId`.
+ */
+export async function sendEmail(input: SendEmailInput): Promise<string> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const { data, error } = await supabase.functions.invoke("send-email", {
+    body: {
+      leadId: input.leadId ?? null,
+      contactId: input.contactId ?? null,
+      to: input.to,
+      subject: input.subject,
+      bodyHtml: input.bodyHtml,
+      createdBy: session?.user.id ?? null,
+    },
+  });
+
+  if (error) {
+    if (error instanceof FunctionsHttpError) {
+      const body = await error.context.json().catch(() => null);
+      throw new Error(body?.error ?? error.message);
+    }
+    throw error;
+  }
+  if (data?.error) throw new Error(data.error);
+
+  const emailId = data.emailId as string;
+
+  if (input.leadId) {
+    await supabase.from("timeline_events").insert({
+      lead_id: input.leadId,
+      type: "email",
+      title: `Correo enviado: ${input.subject}`,
+      description: input.bodyHtml.replace(/<[^>]+>/g, " ").trim().slice(0, 240),
+      email_id: emailId,
+    });
+  }
+
+  return emailId;
+}
+
+/** Estado de tracking (enviado/abierto/clic) de correos ya enviados, para mostrar en el timeline. */
+export async function fetchEmailsByIds(ids: string[]): Promise<EmailRow[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase.from("emails").select("*").in("id", ids);
+  if (error) throw error;
+  return data ?? [];
 }

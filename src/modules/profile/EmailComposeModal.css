@@ -1,0 +1,21 @@
+.email-compose {
+  max-width: 480px;
+}
+
+.email-compose__body {
+  width: 100%;
+  min-height: 140px;
+  padding: var(--space-3);
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.email-compose__body:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}

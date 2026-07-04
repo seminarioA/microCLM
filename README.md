@@ -17,6 +17,7 @@ CLM (Client Lifecycle Management) de pipeline comercial.
 | Organigrama | Árbol visual de los contactos de una empresa, jerarquía "reporta a" y motivo de contacto. Click en un contacto abre su perfil en Perfiles si tiene un lead asociado. | Todos (módulo opcional, activable desde Marketplace) |
 | Dashboard | KPIs, embudo de conversión, gráficos (Chart.js) sobre datos reales. Colores de series derivados de las variables de marca. | Todos |
 | Perfiles | Directorio de leads/contactos, filtros por rubro y etapa, vista lista/grilla. Detalle: timeline de interacciones, foto subible (Storage), correo (`mailto:`) y teléfono (WhatsApp) clicables, edición de datos, impresión. | Todos |
+| Correo | Envío de correos reales desde el perfil de un lead (Resend), con tracking de apertura (pixel) y de clics (redirect instrumentado), reflejado como estado en el timeline. | Todos |
 | Mi Perfil | Nombre, cargo, foto, correo editable (flujo de confirmación de Supabase Auth), Rol visible solo para administradores. | Todos |
 | Configuración | Colores de marca del tenant, precargados y editables en caliente para todo el equipo; botón para restaurar la paleta de fábrica. | Administradores |
 | Marketplace de módulos | Activa/desactiva módulos opcionales para todo el equipo. | Administradores |
@@ -44,15 +45,18 @@ CLM (Client Lifecycle Management) de pipeline comercial.
 
 ## Backend (Supabase)
 
-Tablas: `profiles`, `companies`, `contacts`, `sectors`, `pipeline_stages`, `leads`, `timeline_events`, `notifications`, `tenant_settings`, `installed_modules`. Todas con RLS habilitado.
+Tablas: `profiles`, `companies`, `contacts`, `sectors`, `pipeline_stages`, `leads`, `timeline_events`, `emails`, `notifications`, `tenant_settings`, `installed_modules`. Todas con RLS habilitado.
 
 - `profiles.role` (`admin` / `member`): controla acceso a Configuración/Marketplace y visibilidad del campo Rol. Distinto de `role_title` (cargo/puesto).
 - `contacts.reports_to` (auto-referencia): jerarquía del Organigrama. `contacts.avatar_url`: foto subida desde Perfiles.
 - `sectors`: lista de rubros, editable desde la UI.
 - `tenant_settings`: fila única con los colores de marca; se aplican en el cliente sobrescribiendo las variables CSS de `tokens.css`.
 - `installed_modules`: qué módulos opcionales están activos para el equipo (hoy: `orgchart`).
+- `emails` / `timeline_events.email_id`: registro de cada correo enviado (destinatario, asunto, cuerpo, estado, `opened_at`, `clicked_at`), vinculado al evento del timeline que lo originó.
 - Storage `avatars`: lectura pública, escritura para cualquier usuario autenticado.
 - Edge Function `osint-search`: recibe nombre/empresa, consulta DuckDuckGo, devuelve señales clasificadas.
+- Edge Function `send-email`: envía el correo vía Resend, instrumentando el HTML con pixel de apertura y links reescritos para trackear clics. Requiere el secret `RESEND_API_KEY`.
+- Edge Functions `track-email-open` / `track-email-click`: endpoints públicos (`verify_jwt: false`) que registran `opened_at`/`clicked_at` y devuelven el pixel o redirigen al link real.
 
 ## Desarrollo
 

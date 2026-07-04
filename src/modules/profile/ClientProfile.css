@@ -214,6 +214,24 @@
   color: var(--color-ink-soft);
 }
 
+.email-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill, 999px);
+  font-size: 10.5px;
+  font-weight: 500;
+  width: fit-content;
+}
+
+.email-status-badge.is-queued { background: var(--color-line); color: var(--color-ink-faint); }
+.email-status-badge.is-sent { background: color-mix(in srgb, var(--color-moss) 15%, transparent); color: var(--color-moss); }
+.email-status-badge.is-opened { background: color-mix(in srgb, var(--color-amber) 20%, transparent); color: var(--color-amber); }
+.email-status-badge.is-clicked { background: color-mix(in srgb, var(--color-accent) 18%, transparent); color: var(--color-accent-deep); }
+.email-status-badge.is-failed { background: color-mix(in srgb, var(--color-legado) 15%, transparent); color: var(--color-legado); }
+
 @media (max-width: 900px) {
   .profile-layout {
     grid-template-columns: 1fr;
