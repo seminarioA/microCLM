@@ -69,7 +69,7 @@ function App() {
         <div className="app-module" key={active}>
           {active === "kanban" && <KanbanBoard />}
           {active === "form" && <LeadForm />}
-          {active === "osint" && <OsintProspecting />}
+          {active === "osint" && <OsintProspecting onLeadCreated={handleSelectLead} />}
           {active === "orgchart" && <OrgChart onSelectContact={handleSelectContact} />}
           {active === "dashboard" && <Dashboard />}
           {active === "profiles" && <ClientProfile leadId={selectedLeadId ?? undefined} />}

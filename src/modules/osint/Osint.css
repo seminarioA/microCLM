@@ -270,6 +270,18 @@
   line-height: 1.6;
 }
 
+.osint-result__actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.osint-add-summary {
+  font-size: 11.5px;
+  color: var(--color-ink-faint);
+  margin-bottom: var(--space-3);
+}
+
 @media (max-width: 900px) {
   .osint-grid {
     grid-template-columns: 1fr;

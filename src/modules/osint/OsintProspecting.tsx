@@ -7,12 +7,14 @@ import {
   Newspaper,
   Radar,
   ShieldCheck,
+  UserPlus,
   UserSearch,
 } from "lucide-react";
 import { ModuleHeader } from "../../components/layout/ModuleHeader";
 import { NameAutocomplete } from "../../components/shared/NameAutocomplete";
 import { CompanyAutocomplete } from "../../components/shared/CompanyAutocomplete";
 import { resolveCompany, runOsintSearch, type CompanySuggestion, type OsintSearchProfile, type OsintSignal } from "../../lib/crm";
+import { AddToProfilesModal } from "./AddToProfilesModal";
 import "./Osint.css";
 
 type Step = "idle" | "loading" | "result" | "error";
@@ -36,7 +38,23 @@ function SignalRow({ signal }: { signal: OsintSignal }) {
   );
 }
 
-export function OsintProspecting() {
+/** Extrae la URL de LinkedIn de las señales OSINT, si de verdad se encontró una. */
+function extractLinkedin(profile: OsintSearchProfile): string | undefined {
+  const signal = profile.digitalFootprint.find((s) => s.label === "LinkedIn");
+  return signal && /^https?:\/\//.test(signal.value) ? signal.value : undefined;
+}
+
+/** Extrae el correo estimado de las señales OSINT, si de verdad se pudo estimar uno. */
+function extractEstimatedEmail(profile: OsintSearchProfile): string | undefined {
+  const signal = profile.contact.find((s) => s.label === "Patrón de correo estimado");
+  return signal && signal.value.includes("@") ? signal.value : undefined;
+}
+
+interface OsintProspectingProps {
+  onLeadCreated?: (leadId: string) => void;
+}
+
+export function OsintProspecting({ onLeadCreated }: OsintProspectingProps) {
   const [step, setStep] = useState<Step>("idle");
   const [name, setName] = useState("");
   const [company, setCompany] = useState("");
@@ -44,6 +62,7 @@ export function OsintProspecting() {
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
   const [profile, setProfile] = useState<OsintSearchProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [addingToProfiles, setAddingToProfiles] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -234,10 +253,29 @@ export function OsintProspecting() {
             </p>
           </div>
 
-          <button type="button" className="btn btn-outline" onClick={handleReset}>
-            <Fingerprint size={13} strokeWidth={2} /> Nueva búsqueda
-          </button>
+          <div className="osint-result__actions">
+            <button type="button" className="btn btn-outline" onClick={handleReset}>
+              <Fingerprint size={13} strokeWidth={2} /> Nueva búsqueda
+            </button>
+            <button type="button" className="btn btn-primary" onClick={() => setAddingToProfiles(true)}>
+              <UserPlus size={13} strokeWidth={2} /> Agregar a Perfiles
+            </button>
+          </div>
         </div>
+      )}
+
+      {addingToProfiles && profile && (
+        <AddToProfilesModal
+          profile={profile}
+          estimatedEmail={extractEstimatedEmail(profile)}
+          linkedinUrl={extractLinkedin(profile)}
+          onClose={() => setAddingToProfiles(false)}
+          onCreated={(leadId) => {
+            setAddingToProfiles(false);
+            handleReset();
+            onLeadCreated?.(leadId);
+          }}
+        />
       )}
     </section>
   );
