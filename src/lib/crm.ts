@@ -526,6 +526,8 @@ export interface OsintSearchProfile {
   mentions: OsintMention[];
   contact: OsintSignal[];
   resultCount: number;
+  photoUrl?: string;
+  photoSource?: "social" | "search";
 }
 
 /** Ejecuta la búsqueda OSINT real (Edge Function -> DuckDuckGo) para un nombre/empresa. */

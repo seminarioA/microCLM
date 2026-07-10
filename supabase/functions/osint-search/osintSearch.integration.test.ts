@@ -47,6 +47,12 @@ describe.skipIf(!hasCredentials)("osint-search Edge Function (integración real)
 
       expect(Array.isArray(data.profile.mentions)).toBe(true);
       expect(Array.isArray(data.profile.contact)).toBe(true);
+
+      // La foto es best-effort (puede no encontrarse), pero si viene, debe tener la forma correcta.
+      if (data.profile.photoUrl) {
+        expect(typeof data.profile.photoUrl).toBe("string");
+        expect(["social", "search"]).toContain(data.profile.photoSource);
+      }
     },
     20000,
   );

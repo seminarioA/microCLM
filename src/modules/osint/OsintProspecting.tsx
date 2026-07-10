@@ -175,10 +175,24 @@ export function OsintProspecting({ onLeadCreated }: OsintProspectingProps) {
       {step === "result" && profile && (
         <div className="osint-result">
           <div className="osint-profile panel">
-            <img
-              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}&background=1c1b17&color=F5F3E8&size=72`}
-              alt={profile.name}
-            />
+            <div className="osint-profile__pic">
+              <img
+                src={
+                  profile.photoUrl ||
+                  `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}&background=1c1b17&color=F5F3E8&size=72`
+                }
+                alt={profile.name}
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}&background=1c1b17&color=F5F3E8&size=72`;
+                }}
+              />
+              {profile.photoSource === "search" && (
+                <span className="osint-profile__pic-caption" title="Encontrada por búsqueda de imagen general, no confirmada como esta persona">
+                  Foto sin confirmar
+                </span>
+              )}
+            </div>
             <div>
               <h3>{profile.name}</h3>
               <p>{profile.company || "Sin empresa especificada"}</p>

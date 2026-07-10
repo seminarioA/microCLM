@@ -25,6 +25,8 @@ export interface OsintMention {
   url: string;
 }
 
+export type PhotoSource = "social" | "search";
+
 export interface OsintProfile {
   name: string;
   company: string;
@@ -33,6 +35,9 @@ export interface OsintProfile {
   mentions: OsintMention[];
   contact: OsintSignal[];
   resultCount: number;
+  photoUrl?: string;
+  /** "social": la foto viene de una red/sitio ya vinculado a esta persona. "search": es una búsqueda de imagen genérica, sin confirmar que sea la persona correcta. */
+  photoSource?: PhotoSource;
 }
 
 export function buildSearchQuery(name: string, company: string): string {
@@ -184,4 +189,41 @@ export function buildOsintProfile(name: string, company: string, results: DuckDu
   ];
 
   return { name, company, digitalFootprint, companyInfo, mentions, contact, resultCount: results.length };
+}
+
+/** URLs encontradas (en orden de prioridad) de donde intentar sacar una foto real vía og:image. */
+export function photoSourceCandidates(profile: OsintProfile): string[] {
+  const byLabel = (label: string) => profile.digitalFootprint.find((s) => s.label === label);
+  return [byLabel("LinkedIn"), byLabel("Instagram"), byLabel("X (Twitter)"), byLabel("Sitio corporativo")]
+    .filter((s): s is OsintSignal => !!s && s.confidence !== "Baja" && /^https?:\/\//.test(s.value))
+    .map((s) => s.value);
+}
+
+/** Extrae la URL de la meta tag og:image (o twitter:image como respaldo) de una página HTML. */
+export function extractOgImage(html: string): string | null {
+  const ogMatch =
+    html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ??
+    html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+  if (ogMatch) return decodeHtmlEntities(ogMatch[1]);
+
+  const twitterMatch =
+    html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i) ??
+    html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image["']/i);
+  return twitterMatch ? decodeHtmlEntities(twitterMatch[1]) : null;
+}
+
+/** Extrae el token "vqd" que exige la API interna de búsqueda de imágenes de DuckDuckGo. */
+export function extractVqd(html: string): string | null {
+  const match = html.match(/vqd=['"]([\d-]+)['"]/) ?? html.match(/vqd=([\d-]+)&/);
+  return match ? match[1] : null;
+}
+
+/** Extrae las URLs de imagen de la respuesta JSON de la API de imágenes de DuckDuckGo (i.js). */
+export function parseImageSearchJson(json: string): string[] {
+  try {
+    const data = JSON.parse(json) as { results?: { image?: string }[] };
+    return (data.results ?? []).map((r) => r.image).filter((url): url is string => !!url && /^https?:\/\//.test(url));
+  } catch {
+    return [];
+  }
 }

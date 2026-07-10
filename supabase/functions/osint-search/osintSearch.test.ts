@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { buildOsintProfile, buildSearchQuery, parseDuckDuckGoHtml } from "./osintSearch";
+import {
+  buildOsintProfile,
+  buildSearchQuery,
+  extractOgImage,
+  extractVqd,
+  parseDuckDuckGoHtml,
+  parseImageSearchJson,
+  photoSourceCandidates,
+} from "./osintSearch";
 
 // Fixture recortada de una página real de resultados de
 // https://html.duckduckgo.com/html/?q=... (sin JavaScript, HTML estable
@@ -135,5 +143,80 @@ describe("buildOsintProfile", () => {
       expect(signal.value).toBe("No encontrado en la búsqueda");
     });
     expect(profile.contact[0].confidence).toBe("Baja");
+  });
+});
+
+describe("photoSourceCandidates", () => {
+  it("prioriza LinkedIn, Instagram, Twitter y sitio corporativo, en ese orden", () => {
+    const results = parseDuckDuckGoHtml(DDG_FIXTURE_HTML);
+    const profile = buildOsintProfile("Diego Silva", "MegaCorp", results);
+
+    expect(photoSourceCandidates(profile)).toEqual([
+      "https://www.linkedin.com/in/diegosilva",
+      "https://www.megacorp.pe/",
+    ]);
+  });
+
+  it("no incluye señales de confianza baja (no encontradas)", () => {
+    const profile = buildOsintProfile("Nadie Conocido", "EmpresaInexistente", []);
+    expect(photoSourceCandidates(profile)).toEqual([]);
+  });
+});
+
+describe("extractOgImage", () => {
+  it("extrae la URL de og:image sin importar el orden de los atributos", () => {
+    const html = `<head><meta property="og:image" content="https://example.com/foto.jpg" /></head>`;
+    expect(extractOgImage(html)).toBe("https://example.com/foto.jpg");
+  });
+
+  it("extrae og:image cuando content viene antes que property", () => {
+    const html = `<meta content="https://example.com/otra.jpg" property="og:image" />`;
+    expect(extractOgImage(html)).toBe("https://example.com/otra.jpg");
+  });
+
+  it("cae a twitter:image si no hay og:image", () => {
+    const html = `<meta name="twitter:image" content="https://example.com/tw.jpg" />`;
+    expect(extractOgImage(html)).toBe("https://example.com/tw.jpg");
+  });
+
+  it("devuelve null si no hay ninguna meta tag de imagen", () => {
+    expect(extractOgImage("<html><head><title>Sin imagen</title></head></html>")).toBeNull();
+  });
+
+  it("decodifica entidades HTML en la URL (&amp; en query strings)", () => {
+    const html = `<meta property="og:image" content="https://example.com/foto.jpg?a=1&amp;b=2" />`;
+    expect(extractOgImage(html)).toBe("https://example.com/foto.jpg?a=1&b=2");
+  });
+});
+
+describe("extractVqd", () => {
+  it("extrae el token vqd entre comillas", () => {
+    expect(extractVqd(`vqd="3-12345-67890"`)).toBe("3-12345-67890");
+  });
+
+  it("extrae el token vqd seguido de &", () => {
+    expect(extractVqd(`...&vqd=3-11111-22222&...`)).toBe("3-11111-22222");
+  });
+
+  it("devuelve null si no encuentra el token", () => {
+    expect(extractVqd("<html>sin token</html>")).toBeNull();
+  });
+});
+
+describe("parseImageSearchJson", () => {
+  it("extrae las URLs de imagen de la respuesta de la API de imágenes", () => {
+    const json = JSON.stringify({
+      results: [{ image: "https://example.com/1.jpg" }, { image: "https://example.com/2.jpg" }],
+    });
+    expect(parseImageSearchJson(json)).toEqual(["https://example.com/1.jpg", "https://example.com/2.jpg"]);
+  });
+
+  it("ignora resultados sin campo image o con URLs inválidas", () => {
+    const json = JSON.stringify({ results: [{ title: "sin imagen" }, { image: "no-es-una-url" }] });
+    expect(parseImageSearchJson(json)).toEqual([]);
+  });
+
+  it("devuelve un arreglo vacío si el JSON es inválido", () => {
+    expect(parseImageSearchJson("esto no es JSON")).toEqual([]);
   });
 });
