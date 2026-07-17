@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { ModuleHeader } from "../../components/layout/ModuleHeader";
 import { useSectors } from "../../hooks/useSectors";
-import { mailtoLink, whatsappLink } from "../../lib/contactLinks";
+import { linkedinLink, mailtoLink, whatsappLink } from "../../lib/contactLinks";
 import {
   addTimelineEvent,
   fetchEmailsByIds,
@@ -394,7 +394,18 @@ export function ClientProfile({ leadId }: ClientProfileProps) {
               <Link2 size={15} strokeWidth={1.75} />
               <div>
                 <small>LinkedIn</small>
-                <p>{profile.contact.linkedin_url ?? "No disponible"}</p>
+                {profile.contact.linkedin_url ? (
+                  <a
+                    className="detail-link"
+                    href={linkedinLink(profile.contact.linkedin_url)}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {profile.contact.linkedin_url}
+                  </a>
+                ) : (
+                  <p>No disponible</p>
+                )}
               </div>
             </div>
             <div className="detail-row">
