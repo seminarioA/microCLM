@@ -163,6 +163,8 @@ export interface OsintLeadInput {
   companyId?: string;
   email?: string;
   linkedinUrl?: string;
+  /** URLs de foto elegidas en la grilla de Prospección OSINT. La primera se usa como avatar_url; todas quedan guardadas en contact_photos. */
+  photoUrls?: string[];
 }
 
 /** Convierte un perfil de Prospección OSINT en un lead real, en la etapa "Lead captado". */
@@ -188,11 +190,16 @@ export async function createLeadFromOsint(input: OsintLeadInput): Promise<Create
       full_name: input.name.trim(),
       email: input.email?.trim() || null,
       linkedin_url: input.linkedinUrl?.trim() || null,
+      avatar_url: input.photoUrls?.[0] ?? null,
       company_id: companyId ?? null,
     })
     .select("id")
     .single();
   if (contactError) throw contactError;
+
+  if (input.photoUrls && input.photoUrls.length > 0) {
+    await supabase.from("contact_photos").insert(input.photoUrls.map((url) => ({ contact_id: contact.id, url })));
+  }
 
   const { data: stage, error: stageError } = await supabase
     .from("pipeline_stages")
@@ -506,6 +513,25 @@ export async function uploadContactAvatar(contactId: string, file: File): Promis
   return publicUrl;
 }
 
+export type ContactPhoto = Database["public"]["Tables"]["contact_photos"]["Row"];
+
+/** Fotos guardadas para un contacto (p. ej. las elegidas al agregarlo desde Prospección OSINT). */
+export async function fetchContactPhotos(contactId: string): Promise<ContactPhoto[]> {
+  const { data, error } = await supabase
+    .from("contact_photos")
+    .select("*")
+    .eq("contact_id", contactId)
+    .order("created_at");
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Usa una de las fotos guardadas del contacto como su foto de perfil principal. */
+export async function setContactAvatar(contactId: string, url: string): Promise<void> {
+  const { error } = await supabase.from("contacts").update({ avatar_url: url }).eq("id", contactId);
+  if (error) throw error;
+}
+
 export interface OsintSignal {
   label: string;
   value: string;
@@ -518,6 +544,11 @@ export interface OsintMention {
   url: string;
 }
 
+export interface OsintPhotoCandidate {
+  url: string;
+  source: "social" | "search";
+}
+
 export interface OsintSearchProfile {
   name: string;
   company: string;
@@ -528,6 +559,7 @@ export interface OsintSearchProfile {
   resultCount: number;
   photoUrl?: string;
   photoSource?: "social" | "search";
+  photoCandidates?: OsintPhotoCandidate[];
 }
 
 /** Ejecuta la búsqueda OSINT real (Edge Function -> DuckDuckGo) para un nombre/empresa. */

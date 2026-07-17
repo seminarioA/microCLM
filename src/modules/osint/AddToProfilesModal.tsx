@@ -8,11 +8,19 @@ interface AddToProfilesModalProps {
   profile: OsintSearchProfile;
   estimatedEmail?: string;
   linkedinUrl?: string;
+  photoUrls?: string[];
   onClose: () => void;
   onCreated: (leadId: string) => void;
 }
 
-export function AddToProfilesModal({ profile, estimatedEmail, linkedinUrl, onClose, onCreated }: AddToProfilesModalProps) {
+export function AddToProfilesModal({
+  profile,
+  estimatedEmail,
+  linkedinUrl,
+  photoUrls,
+  onClose,
+  onCreated,
+}: AddToProfilesModalProps) {
   const [name, setName] = useState(profile.name);
   const [company, setCompany] = useState(profile.company);
   const [companyId, setCompanyId] = useState<string | undefined>(undefined);
@@ -58,6 +66,7 @@ export function AddToProfilesModal({ profile, estimatedEmail, linkedinUrl, onClo
         companyId,
         email: estimatedEmail,
         linkedinUrl,
+        photoUrls,
       });
       onCreated(created.leadId);
     } catch (err) {
@@ -144,10 +153,14 @@ export function AddToProfilesModal({ profile, estimatedEmail, linkedinUrl, onClo
           )}
         </div>
 
-        {(estimatedEmail || linkedinUrl) && (
+        {(estimatedEmail || linkedinUrl || (photoUrls && photoUrls.length > 0)) && (
           <p className="osint-add-summary">
             Se guardarán también los datos detectados por OSINT:{" "}
-            {[estimatedEmail && `correo estimado ${estimatedEmail}`, linkedinUrl && `LinkedIn ${linkedinUrl}`]
+            {[
+              estimatedEmail && `correo estimado ${estimatedEmail}`,
+              linkedinUrl && `LinkedIn ${linkedinUrl}`,
+              photoUrls && photoUrls.length > 0 && `${photoUrls.length} foto(s) seleccionada(s)`,
+            ]
               .filter(Boolean)
               .join(", ")}
           </p>

@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import {
   buildOsintProfile,
+  buildPhotoCandidates,
   buildSearchQuery,
   extractOgImage,
   extractVqd,
@@ -18,41 +19,41 @@ const corsHeaders = {
 const BROWSER_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
 
-/** Intenta sacar una foto real de las redes/sitio encontrados (og:image). Best-effort: cualquier fallo se ignora. */
-async function findPhotoFromSocialSources(profile: OsintProfile): Promise<string | null> {
+/** Saca la foto real (og:image) de cada red/sitio encontrado que la tenga. Best-effort: cualquier fallo se ignora. */
+async function findPhotosFromSocialSources(profile: OsintProfile): Promise<string[]> {
+  const images: string[] = [];
   for (const url of photoSourceCandidates(profile)) {
     try {
       const res = await fetch(url, { headers: { "User-Agent": BROWSER_USER_AGENT } });
       if (!res.ok) continue;
       const html = await res.text();
       const image = extractOgImage(html);
-      if (image) return image;
+      if (image) images.push(image);
     } catch {
       // Sigue con la siguiente fuente.
     }
   }
-  return null;
+  return images;
 }
 
-/** Respaldo: busca una imagen pública por nombre+empresa en la API de imágenes de DuckDuckGo. Best-effort. */
-async function findPhotoFromImageSearch(query: string): Promise<string | null> {
+/** Respaldo: busca fotos públicas por nombre+empresa en la API de imágenes de DuckDuckGo. Best-effort. */
+async function findPhotosFromImageSearch(query: string): Promise<string[]> {
   try {
     const landingRes = await fetch(`https://duckduckgo.com/?q=${encodeURIComponent(query)}&iax=images&ia=images`, {
       headers: { "User-Agent": BROWSER_USER_AGENT },
     });
-    if (!landingRes.ok) return null;
+    if (!landingRes.ok) return [];
     const vqd = extractVqd(await landingRes.text());
-    if (!vqd) return null;
+    if (!vqd) return [];
 
     const imagesRes = await fetch(
       `https://duckduckgo.com/i.js?l=us-en&o=json&q=${encodeURIComponent(query)}&vqd=${vqd}&f=,,,&p=1`,
       { headers: { "User-Agent": BROWSER_USER_AGENT, Referer: "https://duckduckgo.com/" } },
     );
-    if (!imagesRes.ok) return null;
-    const images = parseImageSearchJson(await imagesRes.text());
-    return images[0] ?? null;
+    if (!imagesRes.ok) return [];
+    return parseImageSearchJson(await imagesRes.text());
   } catch {
-    return null;
+    return [];
   }
 }
 
@@ -92,11 +93,13 @@ Deno.serve(async (req: Request) => {
     const results = parseDuckDuckGoHtml(html);
     const profile = buildOsintProfile(name, company ?? "", results);
 
-    const socialPhoto = await findPhotoFromSocialSources(profile);
-    const photoUrl = socialPhoto ?? (await findPhotoFromImageSearch(query)) ?? undefined;
-    const photoSource = photoUrl ? (socialPhoto ? "social" : "search") : undefined;
+    const socialImages = await findPhotosFromSocialSources(profile);
+    const searchImages = socialImages.length < 4 ? await findPhotosFromImageSearch(query) : [];
+    const photoCandidates = buildPhotoCandidates(socialImages, searchImages, 4);
+    const photoUrl = photoCandidates[0]?.url;
+    const photoSource = photoCandidates[0]?.source;
 
-    return new Response(JSON.stringify({ profile: { ...profile, photoUrl, photoSource } }), {
+    return new Response(JSON.stringify({ profile: { ...profile, photoUrl, photoSource, photoCandidates } }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {

@@ -27,6 +27,12 @@ export interface OsintMention {
 
 export type PhotoSource = "social" | "search";
 
+export interface PhotoCandidate {
+  url: string;
+  /** "social": la foto viene de una red/sitio ya vinculado a esta persona. "search": es una búsqueda de imagen genérica, sin confirmar que sea la persona correcta. */
+  source: PhotoSource;
+}
+
 export interface OsintProfile {
   name: string;
   company: string;
@@ -35,9 +41,11 @@ export interface OsintProfile {
   mentions: OsintMention[];
   contact: OsintSignal[];
   resultCount: number;
+  /** @deprecated usar photoCandidates[0]; se mantiene por compatibilidad. */
   photoUrl?: string;
-  /** "social": la foto viene de una red/sitio ya vinculado a esta persona. "search": es una búsqueda de imagen genérica, sin confirmar que sea la persona correcta. */
+  /** @deprecated usar photoCandidates[0].source; se mantiene por compatibilidad. */
   photoSource?: PhotoSource;
+  photoCandidates?: PhotoCandidate[];
 }
 
 export function buildSearchQuery(name: string, company: string): string {
@@ -197,6 +205,25 @@ export function photoSourceCandidates(profile: OsintProfile): string[] {
   return [byLabel("LinkedIn"), byLabel("Instagram"), byLabel("X (Twitter)"), byLabel("Sitio corporativo")]
     .filter((s): s is OsintSignal => !!s && s.confidence !== "Baja" && /^https?:\/\//.test(s.value))
     .map((s) => s.value);
+}
+
+/** Combina fotos de fuentes sociales (confirmadas) y de búsqueda genérica (sin confirmar) en una sola lista, sin duplicados, hasta `max`. */
+export function buildPhotoCandidates(socialImages: string[], searchImages: string[], max = 4): PhotoCandidate[] {
+  const seen = new Set<string>();
+  const candidates: PhotoCandidate[] = [];
+
+  for (const url of socialImages) {
+    if (candidates.length >= max || seen.has(url)) continue;
+    seen.add(url);
+    candidates.push({ url, source: "social" });
+  }
+  for (const url of searchImages) {
+    if (candidates.length >= max || seen.has(url)) continue;
+    seen.add(url);
+    candidates.push({ url, source: "search" });
+  }
+
+  return candidates;
 }
 
 /** Extrae la URL de la meta tag og:image (o twitter:image como respaldo) de una página HTML. */

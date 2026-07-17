@@ -21,12 +21,15 @@ import { useSectors } from "../../hooks/useSectors";
 import { linkedinLink, mailtoLink, whatsappLink } from "../../lib/contactLinks";
 import {
   addTimelineEvent,
+  fetchContactPhotos,
   fetchEmailsByIds,
   fetchLeadProfile,
   fetchLeads,
   fetchStages,
   fetchTimeline,
+  setContactAvatar,
   uploadContactAvatar,
+  type ContactPhoto,
   type EmailRow,
   type LeadProfile,
   type LeadRecord,
@@ -209,6 +212,7 @@ export function ClientProfile({ leadId }: ClientProfileProps) {
   const [profile, setProfile] = useState<LeadProfile | null>(null);
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
   const [emails, setEmails] = useState<Record<string, EmailRow>>({});
+  const [photos, setPhotos] = useState<ContactPhoto[]>([]);
   const [loading, setLoading] = useState(false);
   const [note, setNote] = useState("");
   const [editing, setEditing] = useState(false);
@@ -237,9 +241,17 @@ export function ClientProfile({ leadId }: ClientProfileProps) {
         } else {
           setEmails({});
         }
+
+        setPhotos(p ? await fetchContactPhotos(p.contactId) : []);
       })
       .finally(() => setLoading(false));
   }, [selectedId]);
+
+  async function handleSetAvatar(url: string) {
+    if (!profile) return;
+    await setContactAvatar(profile.contactId, url);
+    load();
+  }
 
   useEffect(() => {
     load();
@@ -341,6 +353,23 @@ export function ClientProfile({ leadId }: ClientProfileProps) {
               onChange={handlePhotoChange}
             />
           </div>
+
+          {photos.length > 1 && (
+            <div className="profile-panel__gallery">
+              {photos.map((photo) => (
+                <button
+                  key={photo.id}
+                  type="button"
+                  className={`profile-panel__gallery-item${photo.url === profile.contact.avatar_url ? " is-active" : ""}`}
+                  onClick={() => handleSetAvatar(photo.url)}
+                  title="Usar como foto principal"
+                >
+                  <img src={photo.url} alt="" />
+                </button>
+              ))}
+            </div>
+          )}
+
           <h2 className="profile-panel__name">{profile.contact.full_name}</h2>
           <span className="profile-panel__code">{profile.company.name}</span>
 

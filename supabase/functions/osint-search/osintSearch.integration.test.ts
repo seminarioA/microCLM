@@ -53,6 +53,12 @@ describe.skipIf(!hasCredentials)("osint-search Edge Function (integración real)
         expect(typeof data.profile.photoUrl).toBe("string");
         expect(["social", "search"]).toContain(data.profile.photoSource);
       }
+      expect(Array.isArray(data.profile.photoCandidates)).toBe(true);
+      expect(data.profile.photoCandidates.length).toBeLessThanOrEqual(4);
+      for (const candidate of data.profile.photoCandidates) {
+        expect(typeof candidate.url).toBe("string");
+        expect(["social", "search"]).toContain(candidate.source);
+      }
     },
     20000,
   );

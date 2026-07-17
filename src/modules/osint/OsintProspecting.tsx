@@ -2,8 +2,10 @@ import { useState } from "react";
 import {
   AtSign,
   Building2,
+  Check,
   Fingerprint,
   GlobeCheck,
+  ImagePlus,
   Newspaper,
   Radar,
   ShieldCheck,
@@ -63,6 +65,11 @@ export function OsintProspecting({ onLeadCreated }: OsintProspectingProps) {
   const [profile, setProfile] = useState<OsintSearchProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [addingToProfiles, setAddingToProfiles] = useState(false);
+  const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
+
+  function togglePhoto(url: string) {
+    setSelectedPhotos((prev) => (prev.includes(url) ? prev.filter((u) => u !== url) : [...prev, url]));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -93,6 +100,7 @@ export function OsintProspecting({ onLeadCreated }: OsintProspectingProps) {
 
       const result = await runOsintSearch(name, resolvedCompany);
       setProfile(result);
+      setSelectedPhotos(result.photoCandidates?.length ? [result.photoCandidates[0].url] : []);
       setStep("result");
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo completar la búsqueda");
@@ -108,6 +116,7 @@ export function OsintProspecting({ onLeadCreated }: OsintProspectingProps) {
     setError(null);
     setName("");
     setCompany("");
+    setSelectedPhotos([]);
   }
 
   return (
@@ -178,7 +187,7 @@ export function OsintProspecting({ onLeadCreated }: OsintProspectingProps) {
             <div className="osint-profile__pic">
               <img
                 src={
-                  profile.photoUrl ||
+                  selectedPhotos[0] ||
                   `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}&background=1c1b17&color=F5F3E8&size=72`
                 }
                 alt={profile.name}
@@ -187,7 +196,7 @@ export function OsintProspecting({ onLeadCreated }: OsintProspectingProps) {
                   e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}&background=1c1b17&color=F5F3E8&size=72`;
                 }}
               />
-              {profile.photoSource === "search" && (
+              {profile.photoCandidates?.find((c) => c.url === selectedPhotos[0])?.source === "search" && (
                 <span className="osint-profile__pic-caption" title="Encontrada por búsqueda de imagen general, no confirmada como esta persona">
                   Foto sin confirmar
                 </span>
@@ -201,6 +210,46 @@ export function OsintProspecting({ onLeadCreated }: OsintProspectingProps) {
               </div>
             </div>
           </div>
+
+          {profile.photoCandidates && profile.photoCandidates.length > 0 && (
+            <div className="osint-photos panel">
+              <div className="osint-card__header">
+                <h4>
+                  <ImagePlus size={13} strokeWidth={2} /> Fotos encontradas
+                </h4>
+              </div>
+              <p className="osint-photos__hint">
+                Elige la o las fotos correctas de esta persona. Se guardarán al presionar "Agregar a Perfiles".
+              </p>
+              <div className="osint-photos__grid">
+                {profile.photoCandidates.map((candidate) => {
+                  const isSelected = selectedPhotos.includes(candidate.url);
+                  return (
+                    <button
+                      type="button"
+                      key={candidate.url}
+                      className={`osint-photo-option${isSelected ? " is-selected" : ""}`}
+                      onClick={() => togglePhoto(candidate.url)}
+                    >
+                      <img
+                        src={candidate.url}
+                        alt=""
+                        onError={(e) => {
+                          e.currentTarget.closest(".osint-photo-option")?.remove();
+                        }}
+                      />
+                      <span className="osint-photo-option__check">
+                        <Check size={12} strokeWidth={3} />
+                      </span>
+                      {candidate.source === "search" && (
+                        <span className="osint-photo-option__tag">Sin confirmar</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="osint-grid">
             <div className="osint-card panel">
@@ -283,6 +332,7 @@ export function OsintProspecting({ onLeadCreated }: OsintProspectingProps) {
           profile={profile}
           estimatedEmail={extractEstimatedEmail(profile)}
           linkedinUrl={extractLinkedin(profile)}
+          photoUrls={selectedPhotos}
           onClose={() => setAddingToProfiles(false)}
           onCreated={(leadId) => {
             setAddingToProfiles(false);

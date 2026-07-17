@@ -44,6 +44,38 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_photos: {
+        Row: {
+          contact_id: string
+          created_at: string
+          id: string
+          source: string | null
+          url: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          id?: string
+          source?: string | null
+          url: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          id?: string
+          source?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_photos_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contacts: {
         Row: {
           avatar_url: string | null

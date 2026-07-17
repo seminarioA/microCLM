@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildOsintProfile,
+  buildPhotoCandidates,
   buildSearchQuery,
   extractOgImage,
   extractVqd,
@@ -218,5 +219,35 @@ describe("parseImageSearchJson", () => {
 
   it("devuelve un arreglo vacío si el JSON es inválido", () => {
     expect(parseImageSearchJson("esto no es JSON")).toEqual([]);
+  });
+});
+
+describe("buildPhotoCandidates", () => {
+  it("pone primero las fotos sociales (confirmadas) y luego las de búsqueda (sin confirmar)", () => {
+    const result = buildPhotoCandidates(["https://social.com/a.jpg"], ["https://search.com/b.jpg"]);
+    expect(result).toEqual([
+      { url: "https://social.com/a.jpg", source: "social" },
+      { url: "https://search.com/b.jpg", source: "search" },
+    ]);
+  });
+
+  it("no repite la misma URL si aparece en ambas listas", () => {
+    const result = buildPhotoCandidates(["https://same.com/a.jpg"], ["https://same.com/a.jpg", "https://other.com/b.jpg"]);
+    expect(result).toEqual([
+      { url: "https://same.com/a.jpg", source: "social" },
+      { url: "https://other.com/b.jpg", source: "search" },
+    ]);
+  });
+
+  it("respeta el máximo (por defecto 4)", () => {
+    const social = ["a", "b", "c"];
+    const search = ["d", "e", "f"];
+    const result = buildPhotoCandidates(social, search);
+    expect(result).toHaveLength(4);
+    expect(result.map((c) => c.url)).toEqual(["a", "b", "c", "d"]);
+  });
+
+  it("devuelve un arreglo vacío si no hay ninguna foto", () => {
+    expect(buildPhotoCandidates([], [])).toEqual([]);
   });
 });
