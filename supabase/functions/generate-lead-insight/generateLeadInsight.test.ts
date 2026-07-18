@@ -61,6 +61,7 @@ describe("parseGroqInsight", () => {
       recommended_product_reason: "Encaja con su necesidad de soporte.",
       success_probability: 0.72,
       score: 81,
+      score_reason: "Alto interés y buen encaje de rubro compensan la urgencia moderada.",
       metrics: { engagement: 70, sector_fit: 90, budget_fit: 60, urgency: 55 },
     });
     const result = parseGroqInsight(raw, validIds);
@@ -69,7 +70,21 @@ describe("parseGroqInsight", () => {
     expect(result.recommended_product_id).toBe("p1");
     expect(result.success_probability).toBe(0.72);
     expect(result.score).toBe(81);
+    expect(result.score_reason).toBe("Alto interés y buen encaje de rubro compensan la urgencia moderada.");
     expect(result.metrics.sector_fit).toBe(90);
+  });
+
+  it("acepta score_reason ausente como null", () => {
+    const raw = JSON.stringify({
+      persona_summary: "x",
+      preferences: [],
+      recommended_product_id: null,
+      recommended_product_reason: null,
+      success_probability: 0.5,
+      score: 50,
+      metrics: { engagement: 1, sector_fit: 1, budget_fit: 1, urgency: 1 },
+    });
+    expect(parseGroqInsight(raw, validIds).score_reason).toBeNull();
   });
 
   it("descarta un recommended_product_id que no existe en el catálogo real", () => {

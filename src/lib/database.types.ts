@@ -237,6 +237,7 @@ export type Database = {
           recommended_product_id: string | null
           recommended_product_reason: string | null
           score: number
+          score_reason: string | null
           success_probability: number
         }
         Insert: {
@@ -251,6 +252,7 @@ export type Database = {
           recommended_product_id?: string | null
           recommended_product_reason?: string | null
           score: number
+          score_reason?: string | null
           success_probability: number
         }
         Update: {
@@ -265,6 +267,7 @@ export type Database = {
           recommended_product_id?: string | null
           recommended_product_reason?: string | null
           score?: number
+          score_reason?: string | null
           success_probability?: number
         }
         Relationships: [

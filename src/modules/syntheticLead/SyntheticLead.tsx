@@ -187,6 +187,7 @@ export function SyntheticLead({ leadId }: SyntheticLeadProps) {
                 <h4>Puntuación general</h4>
                 <div className="synthetic-lead__score-value">{Math.round(insight.score)}</div>
                 <span>Probabilidad de cierre: {Math.round(insight.success_probability * 100)}%</span>
+                {insight.score_reason && <p className="synthetic-lead__score-reason">{insight.score_reason}</p>}
               </div>
 
               <div className="panel synthetic-lead__card synthetic-lead__metrics">

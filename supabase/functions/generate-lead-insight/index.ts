@@ -114,6 +114,7 @@ Deno.serve(async (req: Request) => {
         recommended_product_reason: insight.recommended_product_reason,
         success_probability: insight.success_probability,
         score: insight.score,
+        score_reason: insight.score_reason,
         metrics: insight.metrics,
         raw_response: groqData,
         created_by: createdBy ?? null,

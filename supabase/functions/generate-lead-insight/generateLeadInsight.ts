@@ -50,6 +50,7 @@ const JSON_SHAPE_INSTRUCTIONS = [
   '  "recommended_product_reason": string,',
   '  "success_probability": number (0 a 1, probabilidad de cerrar la venta),',
   '  "score": number (0 a 100, puntuación general de la oportunidad),',
+  '  "score_reason": string (2-3 oraciones que expliquen, con base en las métricas y el historial reales, por qué el score y la probabilidad de cierre son ese número y no otro),',
   '  "metrics": { "engagement": number, "sector_fit": number, "budget_fit": number, "urgency": number } (cada una 0 a 100)',
   "}",
 ].join("\n");
@@ -82,6 +83,7 @@ export interface ParsedInsight {
   recommended_product_reason: string | null;
   success_probability: number;
   score: number;
+  score_reason: string | null;
   metrics: {
     engagement: number;
     sector_fit: number;
@@ -125,6 +127,7 @@ export function parseGroqInsight(rawText: string, validProductIds: string[]): Pa
     recommended_product_reason: typeof p.recommended_product_reason === "string" ? p.recommended_product_reason : null,
     success_probability: clamp(p.success_probability, 0, 1, 0),
     score: clamp(p.score, 0, 100, 0),
+    score_reason: typeof p.score_reason === "string" ? p.score_reason : null,
     metrics: {
       engagement: clamp(metricsRaw.engagement, 0, 100, 0),
       sector_fit: clamp(metricsRaw.sector_fit, 0, 100, 0),

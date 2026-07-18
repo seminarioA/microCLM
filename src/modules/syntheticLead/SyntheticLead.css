@@ -85,6 +85,14 @@
   color: var(--color-ink-faint);
 }
 
+.synthetic-lead__score-reason {
+  margin-top: var(--space-3);
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--color-ink-soft);
+  text-align: left;
+}
+
 .synthetic-lead__metric {
   display: flex;
   flex-direction: column;
