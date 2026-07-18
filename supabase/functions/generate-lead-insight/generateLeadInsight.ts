@@ -1,4 +1,4 @@
-export const GEMINI_MODEL = "gemini-2.0-flash";
+export const GROQ_MODEL = "llama-3.3-70b-versatile";
 
 export interface LeadContextInput {
   contactName: string;
@@ -18,7 +18,7 @@ export interface CatalogProduct {
   price: number | null;
 }
 
-/** Arma el bloque de contexto real del lead que se manda como parte del prompt a Gemini. */
+/** Arma el bloque de contexto real del lead que se manda como parte del prompt al modelo. */
 export function buildLeadContext(input: LeadContextInput): string {
   const lines = [
     `Contacto: ${input.contactName}${input.roleTitle ? ` (${input.roleTitle})` : ""}`,
@@ -33,7 +33,7 @@ export function buildLeadContext(input: LeadContextInput): string {
   return lines.join("\n");
 }
 
-/** Arma el bloque del catálogo disponible para que Gemini elija un producto/servicio real, nunca inventado. */
+/** Arma el bloque del catálogo disponible para que el modelo elija un producto/servicio real, nunca inventado. */
 export function buildCatalogContext(products: CatalogProduct[]): string {
   if (products.length === 0) return "Catálogo: no hay productos/servicios activos registrados.";
   return `Catálogo disponible (elige el id exacto de uno de estos, o null si ninguno aplica):\n${products
@@ -41,38 +41,21 @@ export function buildCatalogContext(products: CatalogProduct[]): string {
     .join("\n")}`;
 }
 
-const RESPONSE_SCHEMA = {
-  type: "object",
-  properties: {
-    persona_summary: { type: "string" },
-    preferences: { type: "array", items: { type: "string" } },
-    recommended_product_id: { type: "string", nullable: true },
-    recommended_product_reason: { type: "string" },
-    success_probability: { type: "number" },
-    score: { type: "number" },
-    metrics: {
-      type: "object",
-      properties: {
-        engagement: { type: "number" },
-        sector_fit: { type: "number" },
-        budget_fit: { type: "number" },
-        urgency: { type: "number" },
-      },
-      required: ["engagement", "sector_fit", "budget_fit", "urgency"],
-    },
-  },
-  required: [
-    "persona_summary",
-    "preferences",
-    "recommended_product_reason",
-    "success_probability",
-    "score",
-    "metrics",
-  ],
-};
+const JSON_SHAPE_INSTRUCTIONS = [
+  "Responde ÚNICAMENTE con un objeto JSON (sin texto antes ni después, sin markdown) con exactamente esta forma:",
+  "{",
+  '  "persona_summary": string (2-3 oraciones sobre gustos/preferencias inferidos),',
+  '  "preferences": string[] (lista corta de intereses/preferencias concretas),',
+  '  "recommended_product_id": string o null (debe ser exactamente uno de los ids del catálogo, o null),',
+  '  "recommended_product_reason": string,',
+  '  "success_probability": number (0 a 1, probabilidad de cerrar la venta),',
+  '  "score": number (0 a 100, puntuación general de la oportunidad),',
+  '  "metrics": { "engagement": number, "sector_fit": number, "budget_fit": number, "urgency": number } (cada una 0 a 100)',
+  "}",
+].join("\n");
 
-/** Arma el body completo para POST a la API de Gemini (generateContent), con salida JSON forzada por schema. */
-export function buildGeminiRequestBody(leadContext: string, catalogContext: string) {
+/** Arma el body completo para POST a la API de Groq (chat completions, compatible con OpenAI), con salida JSON forzada. */
+export function buildGroqRequestBody(leadContext: string, catalogContext: string) {
   const prompt = [
     "Eres un analista de ventas B2B. Con la información real de este lead y el catálogo real de la empresa, genera un análisis de lead sintético.",
     "No inventes datos que no estén en el contexto. Si recomiendas un producto, su id debe ser exactamente uno de los ids listados en el catálogo (o null si ninguno encaja).",
@@ -81,15 +64,14 @@ export function buildGeminiRequestBody(leadContext: string, catalogContext: stri
     "",
     catalogContext,
     "",
-    "Devuelve: persona_summary (2-3 oraciones sobre gustos/preferencias inferidos), preferences (lista corta de intereses/preferencias concretas), recommended_product_id, recommended_product_reason, success_probability (0 a 1, probabilidad de cerrar la venta), score (0 a 100, puntuación general de la oportunidad), y metrics con engagement/sector_fit/budget_fit/urgency (cada una 0 a 100).",
+    JSON_SHAPE_INSTRUCTIONS,
   ].join("\n");
 
   return {
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-    generationConfig: {
-      responseMimeType: "application/json",
-      responseSchema: RESPONSE_SCHEMA,
-    },
+    model: GROQ_MODEL,
+    messages: [{ role: "user", content: prompt }],
+    response_format: { type: "json_object" },
+    temperature: 0.4,
   };
 }
 
@@ -114,21 +96,21 @@ function clamp(value: unknown, min: number, max: number, fallback: number): numb
 }
 
 /**
- * Parsea y sanea el JSON que devuelve Gemini. Nunca confía ciegamente en el
- * modelo: recorta probabilidades/scores fuera de rango y descarta un
+ * Parsea y sanea el JSON que devuelve el modelo. Nunca confía ciegamente en
+ * él: recorta probabilidades/scores fuera de rango y descarta un
  * `recommended_product_id` que no exista en el catálogo real (evita que la
  * IA "alucine" un producto que no existe).
  */
-export function parseGeminiInsight(rawText: string, validProductIds: string[]): ParsedInsight {
+export function parseGroqInsight(rawText: string, validProductIds: string[]): ParsedInsight {
   let parsed: unknown;
   try {
     parsed = JSON.parse(rawText);
   } catch {
-    throw new Error("Gemini devolvió una respuesta que no es JSON válido");
+    throw new Error("El modelo devolvió una respuesta que no es JSON válido");
   }
 
   if (typeof parsed !== "object" || parsed === null) {
-    throw new Error("Gemini devolvió una respuesta con forma inesperada");
+    throw new Error("El modelo devolvió una respuesta con forma inesperada");
   }
 
   const p = parsed as Record<string, unknown>;

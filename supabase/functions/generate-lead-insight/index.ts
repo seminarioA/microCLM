@@ -1,12 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import {
-  buildCatalogContext,
-  buildGeminiRequestBody,
-  buildLeadContext,
-  GEMINI_MODEL,
-  parseGeminiInsight,
-} from "./generateLeadInsight.ts";
+import { buildCatalogContext, buildGroqRequestBody, buildLeadContext, parseGroqInsight } from "./generateLeadInsight.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -36,9 +30,9 @@ Deno.serve(async (req: Request) => {
       return json({ error: "leadId es obligatorio" }, 400);
     }
 
-    const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
-    if (!geminiApiKey) {
-      return json({ error: "Falta configurar GEMINI_API_KEY en los secrets del proyecto" }, 500);
+    const groqApiKey = Deno.env.get("GROQ_API_KEY");
+    if (!groqApiKey) {
+      return json({ error: "Falta configurar GROQ_API_KEY en los secrets del proyecto" }, 500);
     }
 
     const { data: lead, error: leadError } = await supabase
@@ -83,29 +77,29 @@ Deno.serve(async (req: Request) => {
 
     const catalogProducts = products ?? [];
     const catalogContext = buildCatalogContext(catalogProducts);
-    const requestBody = buildGeminiRequestBody(leadContext, catalogContext);
+    const requestBody = buildGroqRequestBody(leadContext, catalogContext);
 
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${geminiApiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
+    const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${groqApiKey}`,
       },
-    );
+      body: JSON.stringify(requestBody),
+    });
 
-    const geminiData = await geminiResponse.json();
+    const groqData = await groqResponse.json();
 
-    if (!geminiResponse.ok) {
-      return json({ error: geminiData?.error?.message ?? "Error al llamar a Gemini" }, 502);
+    if (!groqResponse.ok) {
+      return json({ error: groqData?.error?.message ?? "Error al llamar a Groq" }, 502);
     }
 
-    const rawText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const rawText = groqData?.choices?.[0]?.message?.content;
     if (typeof rawText !== "string") {
-      return json({ error: "Gemini no devolvió contenido analizable" }, 502);
+      return json({ error: "Groq no devolvió contenido analizable" }, 502);
     }
 
-    const insight = parseGeminiInsight(
+    const insight = parseGroqInsight(
       rawText,
       catalogProducts.map((p) => p.id),
     );
@@ -121,7 +115,7 @@ Deno.serve(async (req: Request) => {
         success_probability: insight.success_probability,
         score: insight.score,
         metrics: insight.metrics,
-        raw_response: geminiData,
+        raw_response: groqData,
         created_by: createdBy ?? null,
       })
       .select("*")

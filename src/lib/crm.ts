@@ -814,7 +814,7 @@ export async function fetchLatestInsight(leadId: string): Promise<LeadSyntheticI
 }
 
 /**
- * Dispara la Edge Function que llama a Gemini con los datos reales del lead +
+ * Dispara la Edge Function que llama a Groq con los datos reales del lead +
  * el catálogo, y guarda el resultado estructurado (persona, producto
  * recomendado, probabilidad de éxito, métricas) en `lead_synthetic_insights`.
  */

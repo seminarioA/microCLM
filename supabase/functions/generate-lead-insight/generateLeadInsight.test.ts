@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildCatalogContext, buildLeadContext, parseGeminiInsight } from "./generateLeadInsight";
+import { buildCatalogContext, buildLeadContext, parseGroqInsight } from "./generateLeadInsight";
 
 describe("buildLeadContext", () => {
   it("incluye los datos reales del lead", () => {
@@ -50,7 +50,7 @@ describe("buildCatalogContext", () => {
   });
 });
 
-describe("parseGeminiInsight", () => {
+describe("parseGroqInsight", () => {
   const validIds = ["p1", "p2"];
 
   it("parsea una respuesta bien formada", () => {
@@ -63,7 +63,7 @@ describe("parseGeminiInsight", () => {
       score: 81,
       metrics: { engagement: 70, sector_fit: 90, budget_fit: 60, urgency: 55 },
     });
-    const result = parseGeminiInsight(raw, validIds);
+    const result = parseGroqInsight(raw, validIds);
     expect(result.persona_summary).toBe("Le interesa la automatización.");
     expect(result.preferences).toEqual(["automatización", "soporte 24/7"]);
     expect(result.recommended_product_id).toBe("p1");
@@ -82,7 +82,7 @@ describe("parseGeminiInsight", () => {
       score: 50,
       metrics: { engagement: 1, sector_fit: 1, budget_fit: 1, urgency: 1 },
     });
-    expect(parseGeminiInsight(raw, validIds).recommended_product_id).toBeNull();
+    expect(parseGroqInsight(raw, validIds).recommended_product_id).toBeNull();
   });
 
   it("recorta success_probability y score fuera de rango", () => {
@@ -95,7 +95,7 @@ describe("parseGeminiInsight", () => {
       score: 500,
       metrics: { engagement: -10, sector_fit: 200, budget_fit: 1, urgency: 1 },
     });
-    const result = parseGeminiInsight(raw, validIds);
+    const result = parseGroqInsight(raw, validIds);
     expect(result.success_probability).toBe(1);
     expect(result.score).toBe(100);
     expect(result.metrics.engagement).toBe(0);
@@ -103,10 +103,10 @@ describe("parseGeminiInsight", () => {
   });
 
   it("lanza un error si la respuesta no es JSON", () => {
-    expect(() => parseGeminiInsight("no soy json", validIds)).toThrow(/JSON válido/);
+    expect(() => parseGroqInsight("no soy json", validIds)).toThrow(/JSON válido/);
   });
 
   it("lanza un error si la respuesta no es un objeto", () => {
-    expect(() => parseGeminiInsight("42", validIds)).toThrow(/forma inesperada/);
+    expect(() => parseGroqInsight("42", validIds)).toThrow(/forma inesperada/);
   });
 });

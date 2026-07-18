@@ -19,7 +19,7 @@ CLM (Client Lifecycle Management) de pipeline comercial.
 | Perfiles | Directorio de leads/contactos, filtros por rubro y etapa, vista lista/grilla. Detalle: timeline de interacciones, foto subible (Storage), correo (`mailto:`) y teléfono (WhatsApp) clicables, edición de datos, impresión. | Todos |
 | Correo | Envío de correos reales desde el perfil de un lead (Resend), con tracking de apertura (pixel) y de clics (redirect instrumentado), reflejado como estado en el timeline. | Todos |
 | Catálogo | CRUD de productos/servicios (nombre, descripción, categoría, precio, estado). Es la fuente de verdad que usa el módulo de Lead Sintético para recomendar. | Todos |
-| Lead Sintético | Toma un lead real (contacto, empresa, rubro, etapa, historial de timeline) y el Catálogo, y le pide a Gemini un análisis estructurado: persona/preferencias, producto recomendado (con motivo), probabilidad de cierre y métricas (interés, encaje de rubro, encaje de presupuesto, urgencia). El id del producto recomendado siempre se valida contra el Catálogo real. | Todos (módulo opcional, activable desde Marketplace) |
+| Lead Sintético | Toma un lead real (contacto, empresa, rubro, etapa, historial de timeline) y el Catálogo, y le pide a Groq (Llama 3.3 70B) un análisis estructurado: persona/preferencias, producto recomendado (con motivo), probabilidad de cierre y métricas (interés, encaje de rubro, encaje de presupuesto, urgencia). El id del producto recomendado siempre se valida contra el Catálogo real. | Todos (módulo opcional, activable desde Marketplace) |
 | Mi Perfil | Nombre, cargo, foto, correo editable (flujo de confirmación de Supabase Auth), Rol visible solo para administradores. | Todos |
 | Configuración | Colores de marca del tenant, precargados y editables en caliente para todo el equipo; botón para restaurar la paleta de fábrica. | Administradores |
 | Marketplace de módulos | Activa/desactiva módulos opcionales para todo el equipo. | Administradores |
@@ -56,12 +56,12 @@ Tablas: `profiles`, `companies`, `contacts`, `sectors`, `pipeline_stages`, `lead
 - `installed_modules`: qué módulos opcionales están activos para el equipo (hoy: `orgchart`, `synthetic_lead`).
 - `emails` / `timeline_events.email_id`: registro de cada correo enviado (destinatario, asunto, cuerpo, estado, `opened_at`, `clicked_at`), vinculado al evento del timeline que lo originó.
 - `products`: catálogo de productos/servicios (nombre, descripción, categoría, precio, estado).
-- `lead_synthetic_insights`: historial de análisis de IA por lead (persona, preferencias, producto recomendado, probabilidad de éxito, score, métricas, respuesta cruda de Gemini para auditoría).
+- `lead_synthetic_insights`: historial de análisis de IA por lead (persona, preferencias, producto recomendado, probabilidad de éxito, score, métricas, respuesta cruda del modelo para auditoría).
 - Storage `avatars`: lectura pública, escritura para cualquier usuario autenticado.
 - Edge Function `osint-search`: recibe nombre/empresa, consulta DuckDuckGo, devuelve señales clasificadas.
 - Edge Function `send-email`: envía el correo vía Resend, instrumentando el HTML con pixel de apertura y links reescritos para trackear clics. Requiere el secret `RESEND_API_KEY`.
 - Edge Functions `track-email-open` / `track-email-click`: endpoints públicos (`verify_jwt: false`) que registran `opened_at`/`clicked_at` y devuelven el pixel o redirigen al link real.
-- Edge Function `generate-lead-insight`: arma el contexto real del lead (timeline, empresa, rubro) + el Catálogo activo, y llama a la API de Gemini (`gemini-2.0-flash`, salida forzada a JSON por schema) para generar el análisis. Valida que el producto recomendado exista en el Catálogo real antes de guardarlo. Requiere el secret `GEMINI_API_KEY`.
+- Edge Function `generate-lead-insight`: arma el contexto real del lead (timeline, empresa, rubro) + el Catálogo activo, y llama a la API de Groq (`llama-3.3-70b-versatile`, salida JSON) para generar el análisis. Valida que el producto recomendado exista en el Catálogo real antes de guardarlo. Requiere el secret `GROQ_API_KEY`.
 
 ## Desarrollo
 
