@@ -1,4 +1,4 @@
-import { Brain, Network } from "lucide-react";
+import { Network, PersonStanding } from "lucide-react";
 import { ModuleHeader } from "../../components/layout/ModuleHeader";
 import { useInstalledModules } from "../../hooks/useInstalledModules";
 import "./Marketplace.css";
@@ -22,8 +22,8 @@ const AVAILABLE_MODULES: MarketplaceModuleDef[] = [
     key: "synthetic_lead",
     name: "Lead Sintético",
     description:
-      "Análisis con IA (Gemini) de un lead real: gustos, preferencias, producto/servicio recomendado del Catálogo, probabilidad de cierre y métricas.",
-    icon: Brain,
+      "Análisis con IA (Groq) de un lead real: gustos, preferencias, producto/servicio recomendado del Catálogo, probabilidad de cierre y métricas.",
+    icon: PersonStanding,
   },
 ];
 

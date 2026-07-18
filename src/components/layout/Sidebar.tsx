@@ -1,6 +1,5 @@
 import { useRef, useState } from "react";
 import {
-  Brain,
   Camera,
   CircleUserRound,
   Columns3,
@@ -9,6 +8,7 @@ import {
   Network,
   PanelLeftClose,
   PanelLeftOpen,
+  PersonStanding,
   PieChart,
   Package,
   Radar,
@@ -43,7 +43,7 @@ const ORGCHART_NAV_ITEM: { id: ModuleId; label: string; icon: typeof Columns3 } 
 const SYNTHETIC_LEAD_NAV_ITEM: { id: ModuleId; label: string; icon: typeof Columns3 } = {
   id: "syntheticLead",
   label: "Lead Sintético",
-  icon: Brain,
+  icon: PersonStanding,
 };
 
 const ADMIN_NAV_ITEMS: { id: ModuleId; label: string; icon: typeof Columns3 }[] = [
